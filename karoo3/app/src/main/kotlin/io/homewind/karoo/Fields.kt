@@ -5,6 +5,7 @@ import android.os.RemoteException
 import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -20,11 +21,11 @@ import androidx.glance.appwidget.ExperimentalGlanceRemoteViewsApi
 import androidx.glance.appwidget.GlanceRemoteViews
 import androidx.glance.appwidget.action.ActionCallback
 import androidx.glance.appwidget.action.actionRunCallback
+import androidx.glance.appwidget.cornerRadius
 import androidx.glance.background
 import androidx.glance.layout.Alignment
 import androidx.glance.layout.Box
 import androidx.glance.layout.Column
-import androidx.glance.layout.ContentScale
 import androidx.glance.layout.Row
 import androidx.glance.layout.Spacer
 import androidx.glance.layout.fillMaxHeight
@@ -67,6 +68,10 @@ import kotlinx.coroutines.launch
 import java.util.UUID
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
+
+// Corner radii: cells close to the Karoo's data cells, controls smaller.
+private val CELL_RADIUS = 10.dp
+private val CONTROL_RADIUS = 6.dp
 
 // Colours from the Touch concept V2.
 private val GREEN = Color(0xFF06BB60)
@@ -447,7 +452,7 @@ private fun Dots(hw: HomewindState) {
 
 @Composable
 private fun ModeButton(hw: HomewindState, modifier: GlanceModifier) {
-    Rounded(CONTROL, modifier.height(28.dp).clickable(actionRunCallback<ModeAction>()), R.drawable.bg_round_small) {
+    Rounded(CONTROL, modifier.height(28.dp).clickable(actionRunCallback<ModeAction>()), CONTROL_RADIUS) {
         Text(modeLabel(hw), style = bold(14), maxLines = 1)
     }
 }
@@ -455,7 +460,7 @@ private fun ModeButton(hw: HomewindState, modifier: GlanceModifier) {
 @Composable
 private fun Key(icon: Int, action: Action, modifier: GlanceModifier) {
     Box(modifier = modifier.padding(2.dp)) {
-        Rounded(CONTROL, GlanceModifier.fillMaxSize().clickable(action), R.drawable.bg_round_small) {
+        Rounded(CONTROL, GlanceModifier.fillMaxSize().clickable(action), CONTROL_RADIUS) {
             Image(
                 provider = ImageProvider(icon),
                 contentDescription = null,
@@ -473,7 +478,7 @@ private fun BadgeChip(label: String, badge: Badge) {
         Badge.ORANGE -> ORANGE
         Badge.GREY, Badge.HIDDEN -> BADGE_GREY
     }
-    Rounded(color, GlanceModifier, R.drawable.bg_round_small) {
+    Rounded(color, GlanceModifier, CONTROL_RADIUS) {
         // Touch concept: black text on the badge colour.
         Box(modifier = GlanceModifier.padding(horizontal = 8.dp, vertical = 3.dp)) {
             Text(label, style = TextStyle(color = ColorProvider(Color.Black), fontSize = 14.sp, fontWeight = FontWeight.Bold), maxLines = 1)
@@ -481,27 +486,18 @@ private fun BadgeChip(label: String, badge: Badge) {
     }
 }
 
-/**
- * Coloured background with rounded corners. Glance's cornerRadius() works only from
- * Android 12, so the shape is a tinted drawable behind the content; works on every version.
- */
+/** Coloured background with rounded corners (Glance cornerRadius, Android 12+; Karoo 3 runs Android 12). */
 @Composable
 private fun Rounded(
     color: Color,
     modifier: GlanceModifier,
-    shape: Int = R.drawable.bg_round,
+    radius: Dp = CELL_RADIUS,
     content: @Composable () -> Unit,
 ) {
-    Box(modifier = modifier, contentAlignment = Alignment.Center) {
-        Image(
-            provider = ImageProvider(shape),
-            contentDescription = null,
-            modifier = GlanceModifier.fillMaxSize(),
-            contentScale = ContentScale.FillBounds,
-            colorFilter = ColorFilter.tint(ColorProvider(color)),
-        )
-        content()
-    }
+    Box(
+        modifier = modifier.cornerRadius(radius).background(ColorProvider(color)),
+        contentAlignment = Alignment.Center,
+    ) { content() }
 }
 
 private fun modeLabel(hw: HomewindState): String = (hw.effective ?: hw.mode)?.label ?: ""
