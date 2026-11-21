@@ -6,6 +6,8 @@ Karoo 3 extension for [Homewind](https://github.com/mLihs/Homewind). It shows Ho
 
 Karoo 3 only. Karoo and Homewind must be in the same Wi-Fi.
 
+**Wi-Fi in the ride app:** the Karoo turns Wi-Fi off when you open the ride app. Turn it on there in the Quick Settings (swipe down); it then stays on while recording (tested 2026-11-21). The field shows *Wi-Fi off* until it is on and connects within seconds after.
+
 ## Data fields
 
 | Field | Content |
@@ -16,7 +18,7 @@ Karoo 3 only. Karoo and Homewind must be in the same Wi-Fi.
 
 Fan dots, same colours as the Homewind Touch: green = fan runs in the control, white = connected but off, orange = not reachable or in error, dark grey = no fan in this slot.
 
-Field texts when there is no data: *Set up* (no address), *Offline* (no answer), *Web UI full* (two browsers already connected, see "Limits").
+Field texts when there is no data: *Set up* (no address), *Wi-Fi off* (Karoo Wi-Fi off), *Offline* (no answer; the reason is shown below it), *Web UI full* (two browsers already connected, see "Limits").
 
 ## Bonus actions
 
@@ -37,8 +39,9 @@ Which buttons can carry Karoo actions: bonus buttons on SRAM RED AXS and Force A
 1. Install the APK on the Karoo (see "Build and install").
 2. Open **Homewind** in the Karoo's app list.
 3. **Search Homewind** finds it with mDNS (`homewind-xxxxxxxx`). If nothing is found (some routers block multicast), type the IP address. The Homewind web UI or the router shows it. A fixed IP for Homewind in the router helps.
-4. **Test and save**.
-5. Add a Homewind field to a ride profile and/or map the bonus actions.
+4. **Test and save**. On failure the screen shows the reason.
+5. Optional: **Live test** opens the same connection as the data fields for 12 s and shows what arrives (mode, fan %, HR range, fans) or the error.
+6. Add a Homewind field to a ride profile and/or map the bonus actions.
 
 The extension connects only while a Homewind field is on screen or a ride is recording, and disconnects otherwise.
 
@@ -56,7 +59,8 @@ All POSTs send `X-Homewind: 1` (Homewind's CSRF check).
 
 ## Limits of the MVP
 
-- **Takes a browser slot.** Homewind 2.0 has no HTTP read for fan mode, fan speed or the HR range; only the WebSocket carries them. Homewind allows two WebSocket clients (`HW_WEBSOCKET_MAX_CLIENTS = 2`). While the Karoo is connected, only one browser fits. If two browsers are open, the Karoo shows *Web UI full* and tries again every 30 s.
+- **Takes a browser slot.** Homewind 2.0 has no HTTP read for fan mode, fan speed or the HR range; only the WebSocket carries them. Homewind allows two WebSocket clients (`HW_WEBSOCKET_MAX_CLIENTS = 2`). While the Karoo is connected, only one browser fits: a second browser gets "max clients reached" (seen in the first test). If two browsers were there first, the Karoo shows *Web UI full* and tries again every 30 s.
+- **mDNS search is not always reliable** on the Karoo (0.1.2 holds a multicast lock during the search). Entering the IP always works; give Homewind a fixed IP in the router.
 - **Two NVS writes per tap.** 2.0 writes HR min and max separately and at once. Homewind 2.1 brings the shift request with a 3 s write debounce.
 - **Minus acts with delay in Smart and Hybrid.** 2.0 keeps the cool-down brake; the one-time hold release comes with 2.1.
 - **Fan dots by order, not by slot.** `FANS_SNAPSHOT` lists configured fans without gaps. With an empty slot in the middle the dots shift left.

@@ -44,6 +44,8 @@ enum class Link {
     NOT_CONFIGURED,
     CONNECTING,
     CONNECTED,
+    /** The Karoo has no Wi-Fi (it turns Wi-Fi off in the ride app; Quick Settings turns it on). */
+    WIFI_OFF,
     /** No answer from the address (Homewind off, other network, wrong address). */
     UNREACHABLE,
     /** Homewind refused the WebSocket: two browsers are already connected. */

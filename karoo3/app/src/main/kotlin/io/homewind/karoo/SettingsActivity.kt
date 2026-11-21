@@ -98,14 +98,14 @@ class SettingsActivity : Activity() {
         }
         status.text = "Testing $host…"
         thread {
-            val info = HomewindRuntime.testConnection(host)
+            val (info, error) = HomewindRuntime.testConnection(host)
             runOnUiThread {
                 if (info != null) {
                     Prefs.save(this, host, foundName ?: Prefs.name(this).takeIf { Prefs.host(this) == host })
                     HomewindRuntime.reconnect()
                     status.text = "Saved: $host · $info"
                 } else {
-                    status.text = "No answer from $host. Check the address and the Wi-Fi."
+                    status.text = "No answer from $host.\n$error\nCheck the address and that the Karoo's Wi-Fi is on."
                 }
             }
         }

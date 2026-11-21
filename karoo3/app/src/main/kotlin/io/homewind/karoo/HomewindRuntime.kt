@@ -1,6 +1,10 @@
 package io.homewind.karoo
 
 import android.content.Context
+import android.net.ConnectivityManager
+import android.net.Network
+import android.net.NetworkCapabilities
+import android.net.NetworkRequest
 import android.util.Log
 import io.homewind.karoo.core.FanMode
 import io.homewind.karoo.core.FrameParser
@@ -17,6 +21,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.isActive
@@ -24,6 +29,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withTimeoutOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -71,11 +77,33 @@ object HomewindRuntime {
     private lateinit var appContext: Context
     private val actionMutex = Mutex()
 
+    /** Wi-Fi state from the system; a change wakes the connect loop at once. */
+    private val wifiUp = MutableStateFlow(true)
+    private var wifiWatchStarted = false
+
+    private fun startWifiWatch(context: Context) {
+        if (wifiWatchStarted) return
+        wifiWatchStarted = true
+        val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        wifiUp.value = isWifiUp(cm)
+        val up = java.util.Collections.synchronizedSet(mutableSetOf<Network>())
+        val request = NetworkRequest.Builder().addTransportType(NetworkCapabilities.TRANSPORT_WIFI).build()
+        cm.registerNetworkCallback(request, object : ConnectivityManager.NetworkCallback() {
+            override fun onAvailable(network: Network) { up += network; wifiUp.value = true }
+            override fun onLost(network: Network) { up -= network; wifiUp.value = up.isNotEmpty() }
+        })
+    }
+
+    @Suppress("DEPRECATION") // allNetworks: simplest check that works on the Karoo's Android
+    private fun isWifiUp(cm: ConnectivityManager): Boolean =
+        cm.allNetworks.any { cm.getNetworkCapabilities(it)?.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) == true }
+
     // ---- lifecycle -------------------------------------------------------------------------
 
     /** [key] needs the connection (a view id, or "ride"). */
     fun acquire(context: Context, key: String) {
         appContext = context.applicationContext
+        startWifiWatch(appContext)
         synchronized(usersLock) {
             users += key
             if (loop?.isActive != true) loop = scope.launch { connectLoop() }
@@ -121,6 +149,13 @@ object HomewindRuntime {
                 delay(5_000)
                 continue
             }
+            if (!wifiUp.value) {
+                setError("Turn Wi-Fi on in Quick Settings")
+                setLink(Link.WIFI_OFF)
+                wifiUp.first { it } // wait for Wi-Fi, then connect at once
+                backoffMs = 3_000L
+                continue
+            }
             setLink(Link.CONNECTING)
             val (result, opened) = connectOnce(host)
             if (opened) backoffMs = 3_000L
@@ -130,8 +165,10 @@ object HomewindRuntime {
                     delay(30_000) // a browser may close; do not hammer the device
                 }
                 else -> {
+                    if (!wifiUp.value) continue // Wi-Fi went away: handled at the top of the loop
                     setLink(Link.UNREACHABLE)
-                    delay(backoffMs)
+                    // Wait for the backoff, or less if Wi-Fi drops and comes back meanwhile.
+                    withTimeoutOrNull(backoffMs) { wifiUp.first { !it }; wifiUp.first { it } }
                     backoffMs = (backoffMs * 2).coerceAtMost(30_000)
                 }
             }
@@ -276,19 +313,19 @@ object HomewindRuntime {
         }
     }
 
-    /** Used by the settings screen: GET /api/v1/system/info. */
-    fun testConnection(host: String): String? {
+    /** Used by the settings screen: GET /api/v1/system/info. Returns (info, null) or (null, error). */
+    fun testConnection(host: String): Pair<String?, String?> {
         val request = Request.Builder().url("http://$host/api/v1/system/info").get().build()
         return try {
             http.newCall(request).execute().use { r ->
-                if (!r.isSuccessful) return null
+                if (!r.isSuccessful) return null to "HTTP ${r.code} ${r.body?.string().orEmpty().take(60)}".trim()
                 val body = r.body?.string().orEmpty()
                 val name = Regex("^name=(.*)$", RegexOption.MULTILINE).find(body)?.groupValues?.get(1)
                 val version = Regex("^version=(.*)$", RegexOption.MULTILINE).find(body)?.groupValues?.get(1)
-                listOfNotNull(name, version).joinToString(" ").ifEmpty { "OK" }
+                listOfNotNull(name, version).joinToString(" ").ifEmpty { "OK" } to null
             }
         } catch (e: Exception) {
-            null
+            null to "${e.javaClass.simpleName}: ${e.message ?: ""}".take(100)
         }
     }
 

@@ -3,6 +3,7 @@ package io.homewind.karoo
 import android.content.Context
 import android.net.nsd.NsdManager
 import android.net.nsd.NsdServiceInfo
+import android.net.wifi.WifiManager
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
@@ -21,9 +22,15 @@ class Discovery(context: Context, private val onFound: (name: String, host: Stri
     private var listener: NsdManager.DiscoveryListener? = null
     private val seen = mutableSetOf<String>()
 
+    // Some Android builds drop mDNS answers unless the app holds a multicast lock.
+    private val multicastLock = (context.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager)
+        .createMulticastLock("homewind-discovery")
+        .apply { setReferenceCounted(false) }
+
     fun start() {
         stop()
         seen.clear()
+        runCatching { multicastLock.acquire() }
         val l = object : NsdManager.DiscoveryListener {
             override fun onDiscoveryStarted(serviceType: String) {}
             override fun onDiscoveryStopped(serviceType: String) {}
@@ -64,6 +71,7 @@ class Discovery(context: Context, private val onFound: (name: String, host: Stri
     fun stop() {
         listener?.let { runCatching { nsd.stopServiceDiscovery(it) } }
         listener = null
+        runCatching { if (multicastLock.isHeld) multicastLock.release() }
     }
 
     companion object {

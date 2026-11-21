@@ -194,6 +194,7 @@ private fun StatusBlock(config: ViewConfig, state: HomewindRuntime.FieldState) {
                 text = when (state.link) {
                     Link.NOT_CONFIGURED -> "Set up"
                     Link.CONNECTING -> "…"
+                    Link.WIFI_OFF -> "Wi-Fi off"
                     Link.UNREACHABLE -> "Offline"
                     Link.FULL -> "Web UI full"
                     Link.CONNECTED -> "…"
@@ -201,7 +202,7 @@ private fun StatusBlock(config: ViewConfig, state: HomewindRuntime.FieldState) {
                 style = TextStyle(color = ColorProvider(Color.White), fontSize = 18.sp, fontWeight = FontWeight.Bold),
                 maxLines = 1,
             )
-            if (state.link == Link.UNREACHABLE || state.link == Link.FULL) {
+            if (state.link == Link.UNREACHABLE || state.link == Link.FULL || state.link == Link.WIFI_OFF) {
                 state.error?.let { Text(it, style = TextStyle(color = ColorProvider(MUTED), fontSize = 9.sp, textAlign = TextAlign.Center), maxLines = 2) }
             }
             return@Column

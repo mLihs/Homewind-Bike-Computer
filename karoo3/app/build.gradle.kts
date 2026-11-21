@@ -12,8 +12,8 @@ android {
         applicationId = "io.homewind.karoo"
         minSdk = 23
         targetSdk = 34
-        versionCode = 2
-        versionName = "0.1.1"
+        versionCode = 3
+        versionName = "0.1.2"
     }
 
     // Release signing from environment (GitHub secrets in CI). Without it the release
