@@ -3,6 +3,8 @@
     <string name="app_name">Homewind</string>
     <string name="field_status">Homewind fans</string>
     <string name="field_status_description">Fan mode, fan speed and fan states</string>
+    <string name="field_fan_color">Homewind fan colour</string>
+    <string name="field_fan_color_description">Fan speed in %, tile coloured from blue (0 %) to red (100 %)</string>
     <string name="field_control">Homewind fan control</string>
     <string name="field_control_description">Wide: minus, mode (tap to switch), fan speed, fan states, plus</string>
     <string name="field_keys">Homewind − +</string>

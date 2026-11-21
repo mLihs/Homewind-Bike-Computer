@@ -22,6 +22,7 @@ class HomewindExtension : KarooExtension(EXTENSION_ID, BuildConfig.VERSION_NAME)
     override val types by lazy {
         listOf(
             StatusField(EXTENSION_ID),
+            FanColorField(EXTENSION_ID),
             ControlField(EXTENSION_ID),
             KeysField(EXTENSION_ID),
             ModeField(EXTENSION_ID),

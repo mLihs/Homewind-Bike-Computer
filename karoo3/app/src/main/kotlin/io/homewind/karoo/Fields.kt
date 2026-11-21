@@ -49,6 +49,7 @@ import io.hammerhead.karooext.models.ViewConfig
 import io.homewind.karoo.core.Badge
 import io.homewind.karoo.core.Display
 import io.homewind.karoo.core.FanDot
+import io.homewind.karoo.core.HeatScale
 import io.homewind.karoo.core.HomewindState
 import io.homewind.karoo.core.HrStep
 import io.homewind.karoo.core.Link
@@ -179,6 +180,36 @@ class StatusField(extension: String) : HomewindGraphicField(extension, "homewind
             Text(modeLabel(state.hw), style = small(), maxLines = 1)
             FanPercent(state.hw, minOf(config.textSize, 34))
             Dots(state.hw)
+        }
+    }
+}
+
+/**
+ * "Homewind fan colour" (small): fan speed in %, the whole tile coloured in 10 % steps
+ * from blue (0 %) to red (100 %), see [HeatScale]. Mode in effect above the number.
+ */
+class FanColorField(extension: String) : HomewindGraphicField(extension, "homewind-fan-color") {
+    @Composable
+    override fun Content(config: ViewConfig, state: HomewindRuntime.FieldState) {
+        if (!state.hw.hasFanControl) { Waiting(); return }
+        val argb = HeatScale.colorFor(state.hw.shownPct)
+        val text = if (HeatScale.prefersDarkText(argb)) Color.Black else Color.White
+        Box(
+            modifier = GlanceModifier.fillMaxSize().padding(1.dp).background(ColorProvider(Color(argb))),
+            contentAlignment = Alignment.Center,
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    modeLabel(state.hw),
+                    style = TextStyle(color = ColorProvider(text.copy(alpha = 0.75f)), fontSize = 12.sp, textAlign = TextAlign.Center),
+                    maxLines = 1,
+                )
+                Text(
+                    "${state.hw.shownPct} %",
+                    style = TextStyle(color = ColorProvider(text), fontSize = minOf(config.textSize, 34).sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center),
+                    maxLines = 1,
+                )
+            }
         }
     }
 }

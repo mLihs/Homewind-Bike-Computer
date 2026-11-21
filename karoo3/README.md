@@ -18,6 +18,7 @@ Find them in the profile editor: tap a field → filter **Extensions** → Homew
 | --- | --- | --- |
 | **Homewind fan control** | wide | Minus, mode (tap to switch), fan speed in %, fan dots, plus |
 | **Homewind fans** | small | Mode in effect, fan speed in %, fan dots |
+| **Homewind fan colour** | small | Fan speed in %, tile coloured in 10 % steps: 0 % blue → cyan → green → yellow → 100 % red; text switches to dark on light colours |
 | **Homewind − +** | small | Minus and plus keys |
 | **Homewind mode** | small | Mode; tap switches Pure → Smart → Hybrid |
 | **Homewind fan %** | small | Fan speed as a plain number field |
