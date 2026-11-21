@@ -24,6 +24,7 @@ import androidx.glance.background
 import androidx.glance.layout.Alignment
 import androidx.glance.layout.Box
 import androidx.glance.layout.Column
+import androidx.glance.layout.ContentScale
 import androidx.glance.layout.Row
 import androidx.glance.layout.Spacer
 import androidx.glance.layout.fillMaxHeight
@@ -152,10 +153,7 @@ abstract class HomewindGraphicField(extension: String, typeId: String) : DataTyp
         state: HomewindRuntime.FieldState,
     ): Boolean {
         val result = glance.compose(context, DpSize.Unspecified) {
-            Box(
-                modifier = GlanceModifier.fillMaxSize().background(ColorProvider(BACKGROUND)),
-                contentAlignment = Alignment.Center,
-            ) {
+            Rounded(BACKGROUND, GlanceModifier.fillMaxSize()) {
                 if (state.link != Link.CONNECTED) LinkBlock(state) else Content(config, state)
             }
         }
@@ -194,10 +192,7 @@ class FanColorField(extension: String) : HomewindGraphicField(extension, "homewi
         if (!state.hw.hasFanControl) { Waiting(); return }
         val argb = HeatScale.colorFor(state.hw.shownPct)
         val text = if (HeatScale.prefersDarkText(argb)) Color.Black else Color.White
-        Box(
-            modifier = GlanceModifier.fillMaxSize().padding(1.dp).background(ColorProvider(Color(argb))),
-            contentAlignment = Alignment.Center,
-        ) {
+        Rounded(Color(argb), GlanceModifier.fillMaxSize()) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
                     modeLabel(state.hw),
@@ -251,11 +246,7 @@ class ModeField(extension: String) : HomewindGraphicField(extension, "homewind-m
     @Composable
     override fun Content(config: ViewConfig, state: HomewindRuntime.FieldState) {
         if (!state.hw.hasFanControl) { Waiting(); return }
-        Box(
-            modifier = GlanceModifier.fillMaxSize().padding(2.dp).background(ColorProvider(CONTROL))
-                .clickable(actionRunCallback<ModeAction>()),
-            contentAlignment = Alignment.Center,
-        ) {
+        Rounded(CONTROL, GlanceModifier.fillMaxSize().clickable(actionRunCallback<ModeAction>())) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text("Mode", style = small(), maxLines = 1)
                 Text(modeLabel(state.hw), style = bold(minOf(config.textSize, 26)), maxLines = 1)
@@ -363,9 +354,9 @@ private fun SensorTile(kind: Kind, r: SensorRow, valueSize: Int, modifier: Glanc
         RowStatus.DISCONNECTED -> kind.off
         RowStatus.NOT_CONFIGURED -> CONTROL
     }
-    Box(modifier = modifier.padding(1.dp)) {
+    Rounded(bg, modifier.padding(1.dp)) {
         Row(
-            modifier = GlanceModifier.fillMaxSize().background(ColorProvider(bg)).padding(horizontal = 6.dp),
+            modifier = GlanceModifier.fillMaxSize().padding(horizontal = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Image(
@@ -456,10 +447,7 @@ private fun Dots(hw: HomewindState) {
 
 @Composable
 private fun ModeButton(hw: HomewindState, modifier: GlanceModifier) {
-    Box(
-        modifier = modifier.height(28.dp).background(ColorProvider(CONTROL)).clickable(actionRunCallback<ModeAction>()),
-        contentAlignment = Alignment.Center,
-    ) {
+    Rounded(CONTROL, modifier.height(28.dp).clickable(actionRunCallback<ModeAction>()), R.drawable.bg_round_small) {
         Text(modeLabel(hw), style = bold(14), maxLines = 1)
     }
 }
@@ -467,10 +455,7 @@ private fun ModeButton(hw: HomewindState, modifier: GlanceModifier) {
 @Composable
 private fun Key(icon: Int, action: Action, modifier: GlanceModifier) {
     Box(modifier = modifier.padding(2.dp)) {
-        Box(
-            modifier = GlanceModifier.fillMaxSize().background(ColorProvider(CONTROL)).clickable(action),
-            contentAlignment = Alignment.Center,
-        ) {
+        Rounded(CONTROL, GlanceModifier.fillMaxSize().clickable(action), R.drawable.bg_round_small) {
             Image(
                 provider = ImageProvider(icon),
                 contentDescription = null,
@@ -488,12 +473,34 @@ private fun BadgeChip(label: String, badge: Badge) {
         Badge.ORANGE -> ORANGE
         Badge.GREY, Badge.HIDDEN -> BADGE_GREY
     }
-    Box(
-        modifier = GlanceModifier.background(ColorProvider(color)).padding(horizontal = 8.dp, vertical = 3.dp),
-        contentAlignment = Alignment.Center,
-    ) {
+    Rounded(color, GlanceModifier, R.drawable.bg_round_small) {
         // Touch concept: black text on the badge colour.
-        Text(label, style = TextStyle(color = ColorProvider(Color.Black), fontSize = 14.sp, fontWeight = FontWeight.Bold), maxLines = 1)
+        Box(modifier = GlanceModifier.padding(horizontal = 8.dp, vertical = 3.dp)) {
+            Text(label, style = TextStyle(color = ColorProvider(Color.Black), fontSize = 14.sp, fontWeight = FontWeight.Bold), maxLines = 1)
+        }
+    }
+}
+
+/**
+ * Coloured background with rounded corners. Glance's cornerRadius() works only from
+ * Android 12, so the shape is a tinted drawable behind the content; works on every version.
+ */
+@Composable
+private fun Rounded(
+    color: Color,
+    modifier: GlanceModifier,
+    shape: Int = R.drawable.bg_round,
+    content: @Composable () -> Unit,
+) {
+    Box(modifier = modifier, contentAlignment = Alignment.Center) {
+        Image(
+            provider = ImageProvider(shape),
+            contentDescription = null,
+            modifier = GlanceModifier.fillMaxSize(),
+            contentScale = ContentScale.FillBounds,
+            colorFilter = ColorFilter.tint(ColorProvider(color)),
+        )
+        content()
     }
 }
 
