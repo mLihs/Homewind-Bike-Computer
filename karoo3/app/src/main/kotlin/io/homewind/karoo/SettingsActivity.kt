@@ -24,6 +24,7 @@ class SettingsActivity : Activity() {
     private lateinit var found: LinearLayout
     private var discovery: Discovery? = null
     private var foundName: String? = null
+    private var liveTestRunning = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -50,6 +51,7 @@ class SettingsActivity : Activity() {
         root.addView(hostField, LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT))
 
         root.addView(button("Test and save") { testAndSave() })
+        root.addView(button("Live test (WebSocket, 12 s)") { liveTest() })
         status = text(statusLine(), 14f)
         root.addView(status)
 
@@ -109,7 +111,49 @@ class SettingsActivity : Activity() {
         }
     }
 
+    /**
+     * Opens the same connection the data fields use and shows what arrives, or why
+     * it fails. Takes one of Homewind's two WebSocket slots for 12 s.
+     */
+    private fun liveTest() {
+        if (Prefs.host(this) == null) {
+            status.text = "Save an address first."
+            return
+        }
+        if (liveTestRunning) return
+        liveTestRunning = true
+        HomewindRuntime.acquire(this, LIVE_TEST)
+        val start = System.currentTimeMillis()
+        status.post(object : Runnable {
+            override fun run() {
+                val seconds = (System.currentTimeMillis() - start) / 1000
+                val done = seconds >= 12
+                status.text = describe(HomewindRuntime.field.value) + if (done) "\nTest finished." else "\n($seconds s)"
+                if (done) {
+                    HomewindRuntime.release(LIVE_TEST)
+                    liveTestRunning = false
+                } else {
+                    status.postDelayed(this, 500)
+                }
+            }
+        })
+    }
+
+    private fun describe(s: HomewindRuntime.FieldState): String {
+        val hw = s.hw
+        return buildString {
+            append("Connection: ").append(s.link)
+            s.error?.let { append("\nLast error: ").append(it) }
+            append("\nMode: ").append(hw.mode?.label ?: "–")
+            hw.effective?.takeIf { it != hw.mode }?.let { append(" (runs as ").append(it.label).append(")") }
+            append("\nFan: ").append(if (hw.hasFanControl) "${hw.shownPct} %" else "–")
+            append("\nHR range: ").append(if (hw.hrMin != null) "${hw.hrMin}–${hw.hrMax}" else "–")
+            append("\nFans: ").append(if (hw.fansKnown) hw.fans.joinToString(" ") { it.name.lowercase() } else "–")
+        }
+    }
+
     override fun onDestroy() {
+        if (liveTestRunning) HomewindRuntime.release(LIVE_TEST)
         discovery?.stop()
         super.onDestroy()
     }
@@ -130,4 +174,8 @@ class SettingsActivity : Activity() {
     }
 
     private fun dp(v: Int) = (v * resources.displayMetrics.density).toInt()
+
+    companion object {
+        private const val LIVE_TEST = "settings-live-test"
+    }
 }

@@ -47,7 +47,8 @@ import kotlin.coroutines.resume
 object HomewindRuntime {
     private const val TAG = "HomewindRuntime"
 
-    data class FieldState(val link: Link, val hw: HomewindState)
+    /** [error]: why the last connection attempt ended (shown under "Offline"). */
+    data class FieldState(val link: Link, val hw: HomewindState, val error: String? = null)
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val _field = MutableStateFlow(FieldState(Link.NOT_CONFIGURED, HomewindState()))
@@ -115,6 +116,7 @@ object HomewindRuntime {
         while (currentCoroutineContext().isActive) {
             val host = Prefs.host(appContext)
             if (host == null) {
+                setError("no address saved")
                 setLink(Link.NOT_CONFIGURED)
                 delay(5_000)
                 continue
@@ -145,7 +147,7 @@ object HomewindRuntime {
             override fun onOpen(webSocket: WebSocket, response: Response) {
                 opened = true
                 // New connection: the fan list has to arrive again (staged connect or refresh).
-                _field.update { FieldState(Link.CONNECTED, it.hw.copy(fansKnown = false, clientId = null)) }
+                _field.update { FieldState(Link.CONNECTED, it.hw.copy(fansKnown = false, clientId = null), null) }
             }
 
             override fun onMessage(webSocket: WebSocket, bytes: ByteString) {
@@ -169,11 +171,14 @@ object HomewindRuntime {
 
             override fun onClosing(webSocket: WebSocket, code: Int, reason: String) {
                 webSocket.close(1000, null)
+                setError("closed $code ${reason.take(40)}".trim())
                 if (cont.isActive) cont.resume((if (code == 1008) Link.FULL else Link.UNREACHABLE) to opened)
             }
 
             override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
                 Log.d(TAG, "WebSocket failure: ${t.message}")
+                val http = response?.let { " HTTP ${it.code}" }.orEmpty()
+                setError("${t.javaClass.simpleName}: ${t.message ?: ""}$http".take(80))
                 if (cont.isActive) cont.resume(Link.UNREACHABLE to opened)
             }
         })
@@ -181,6 +186,8 @@ object HomewindRuntime {
     }
 
     private fun setLink(link: Link) = _field.update { it.copy(link = link) }
+
+    private fun setError(error: String) = _field.update { it.copy(error = error) }
 
     // ---- actions ---------------------------------------------------------------------------
 

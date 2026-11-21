@@ -201,6 +201,9 @@ private fun StatusBlock(config: ViewConfig, state: HomewindRuntime.FieldState) {
                 style = TextStyle(color = ColorProvider(Color.White), fontSize = 18.sp, fontWeight = FontWeight.Bold),
                 maxLines = 1,
             )
+            if (state.link == Link.UNREACHABLE || state.link == Link.FULL) {
+                state.error?.let { Text(it, style = TextStyle(color = ColorProvider(MUTED), fontSize = 9.sp, textAlign = TextAlign.Center), maxLines = 2) }
+            }
             return@Column
         }
         Text((hw.effective ?: hw.mode)?.label ?: "", style = small(), maxLines = 1)
