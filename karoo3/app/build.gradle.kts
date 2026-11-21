@@ -16,9 +16,24 @@ android {
         versionName = "0.1.0"
     }
 
+    // Release signing from environment (GitHub secrets in CI). Without it the release
+    // build stays unsigned and CI ships the debug build instead.
+    val keystoreFile = System.getenv("KAROO_KEYSTORE_FILE")?.let { file(it) }?.takeIf { it.exists() }
+    if (keystoreFile != null) {
+        signingConfigs {
+            create("homewind") {
+                storeFile = keystoreFile
+                storePassword = System.getenv("KAROO_KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("KAROO_KEY_ALIAS")
+                keyPassword = System.getenv("KAROO_KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
+            if (keystoreFile != null) signingConfig = signingConfigs.getByName("homewind")
         }
     }
 

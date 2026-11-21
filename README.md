@@ -8,9 +8,27 @@ Bike computer integrations for [Homewind](https://github.com/mLihs/Homewind): sh
 
 Planned: Garmin (Connect IQ).
 
-## Builds
+## Builds and releases
 
-GitHub Actions builds the Karoo APK on every push (artifact `homewind-karoo3-apk`). A tag `karoo3-v<version>` (e.g. `karoo3-v0.1.0`) also attaches it to a GitHub release.
+GitHub Actions builds and tests the Karoo APK on every push to `main` that touches `karoo3/`.
+
+**Release:** raise `versionName` (and `versionCode`) in `karoo3/app/build.gradle.kts` and push. If there is no tag `karoo3-v<versionName>` yet, the workflow creates it and a GitHub release with `homewind-karoo3-v<version>.apk`. Pushes without a new version only build.
+
+**Signing:** with the repository secrets below the release APK is signed with a fixed key, so new versions install over old ones. Without them the workflow ships the debug build; its key changes per build, so an update needs an uninstall first.
+
+| Secret | Content |
+| --- | --- |
+| `KAROO_KEYSTORE_BASE64` | the keystore file, base64 |
+| `KAROO_KEYSTORE_PASSWORD` | keystore password |
+| `KAROO_KEY_ALIAS` | key alias |
+| `KAROO_KEY_PASSWORD` | key password |
+
+Create the key once (keep the file and passwords safe, never commit them):
+```sh
+keytool -genkeypair -v -keystore homewind-karoo.jks -alias homewind -keyalg RSA -keysize 4096 -validity 10000
+base64 -i homewind-karoo.jks | pbcopy   # macOS: copies the value for KAROO_KEYSTORE_BASE64
+```
+Add the four secrets under Settings → Secrets and variables → Actions.
 
 ## License
 
