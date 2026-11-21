@@ -80,7 +80,7 @@ class FrameParserTest {
     @Test fun shortAndUnknownFramesIgnored() {
         val before = HomewindState(hrMin = 80, hrMax = 160)
         assertSame(before, FrameParser.apply(before, frame(0x0B, 0x50)))
-        assertSame(before, FrameParser.apply(before, frame(0x10, 1)))
+        assertSame(before, FrameParser.apply(before, frame(0x7F, 1)))
         assertSame(before, FrameParser.apply(before, ByteArray(0)))
     }
 }

@@ -23,7 +23,14 @@ class HomewindExtension : KarooExtension(EXTENSION_ID, BuildConfig.VERSION_NAME)
         listOf(
             StatusField(EXTENSION_ID),
             ControlField(EXTENSION_ID),
+            KeysField(EXTENSION_ID),
+            ModeField(EXTENSION_ID),
             FanSpeedField(EXTENSION_ID, applicationContext),
+            AppsField(EXTENSION_ID),
+            SensorsField(EXTENSION_ID),
+            hrField(EXTENSION_ID),
+            powerField(EXTENSION_ID),
+            cadenceField(EXTENSION_ID),
         )
     }
 

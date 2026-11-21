@@ -5,36 +5,23 @@
     icon="@drawable/ic_homewind"
     scansDevices="false">
 
-    <DataType
-        typeId="homewind"
-        displayName="@string/field_status"
-        description="@string/field_status_description"
-        graphical="true"
-        icon="@drawable/ic_homewind" />
+    <!-- Fans -->
+    <DataType typeId="homewind" displayName="@string/field_status" description="@string/field_status_description" graphical="true" icon="@drawable/ic_homewind" />
+    <DataType typeId="homewind-control" displayName="@string/field_control" description="@string/field_control_description" graphical="true" icon="@drawable/ic_homewind" />
+    <DataType typeId="homewind-keys" displayName="@string/field_keys" description="@string/field_keys_description" graphical="true" icon="@drawable/ic_plus" />
+    <DataType typeId="homewind-mode" displayName="@string/field_mode" description="@string/field_mode_description" graphical="true" icon="@drawable/ic_homewind" />
+    <DataType typeId="homewind-fan" displayName="@string/field_fan" description="@string/field_fan_description" graphical="false" icon="@drawable/ic_homewind" />
 
-    <DataType
-        typeId="homewind-control"
-        displayName="@string/field_control"
-        description="@string/field_control_description"
-        graphical="true"
-        icon="@drawable/ic_homewind" />
+    <!-- Apps and trainer -->
+    <DataType typeId="homewind-apps" displayName="@string/field_apps" description="@string/field_apps_description" graphical="true" icon="@drawable/ic_homewind" />
 
-    <DataType
-        typeId="homewind-fan"
-        displayName="@string/field_fan"
-        description="@string/field_fan_description"
-        graphical="false"
-        icon="@drawable/ic_homewind" />
+    <!-- Sensors -->
+    <DataType typeId="homewind-sensors" displayName="@string/field_sensors" description="@string/field_sensors_description" graphical="true" icon="@drawable/ic_heart" />
+    <DataType typeId="homewind-hr" displayName="@string/field_hr" description="@string/field_hr_description" graphical="true" icon="@drawable/ic_heart" />
+    <DataType typeId="homewind-power" displayName="@string/field_power" description="@string/field_power_description" graphical="true" icon="@drawable/ic_bolt" />
+    <DataType typeId="homewind-cadence" displayName="@string/field_cadence" description="@string/field_cadence_description" graphical="true" icon="@drawable/ic_crank" />
 
-    <BonusAction
-        actionId="plus"
-        displayName="@string/action_plus" />
-
-    <BonusAction
-        actionId="minus"
-        displayName="@string/action_minus" />
-
-    <BonusAction
-        actionId="mode"
-        displayName="@string/action_mode" />
+    <BonusAction actionId="plus" displayName="@string/action_plus" />
+    <BonusAction actionId="minus" displayName="@string/action_minus" />
+    <BonusAction actionId="mode" displayName="@string/action_mode" />
 </ExtensionInfo>

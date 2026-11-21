@@ -183,15 +183,15 @@ object HomewindRuntime {
         val ws = http.newWebSocket(request, object : WebSocketListener() {
             override fun onOpen(webSocket: WebSocket, response: Response) {
                 opened = true
-                // New connection: the fan list has to arrive again (staged connect or refresh).
-                _field.update { FieldState(Link.CONNECTED, it.hw.copy(fansKnown = false, clientId = null), null) }
+                // New connection: fan list, sensors and trainer have to arrive again (staged connect or refresh).
+                _field.update { FieldState(Link.CONNECTED, it.hw.copy(fansKnown = false, sensors = null, clientId = null), null) }
             }
 
             override fun onMessage(webSocket: WebSocket, bytes: ByteString) {
                 val data = bytes.toByteArray()
                 // Apply inside update() so a concurrent change from an action is not lost.
                 val after = _field.updateAndGet { it.copy(hw = FrameParser.apply(it.hw, data)) }.hw
-                // Homewind sends the fan list only to its first client. As second client
+                // Homewind sends fan list, sensors and trainer only to its first client. As second client
                 // ask for it once, unicast, the way the WebUI does.
                 val id = after.clientId
                 if (!refreshRequested && id != null && data.firstOrNull()?.toInt() == FrameParser.CLIENT_ID) {
@@ -199,7 +199,7 @@ object HomewindRuntime {
                     scope.launch {
                         delay(2_000)
                         val now = _field.value
-                        if (now.link == Link.CONNECTED && !now.hw.fansKnown) {
+                        if (now.link == Link.CONNECTED && (!now.hw.fansKnown || now.hw.sensors == null)) {
                             post(host, "/api/v1/action/telemetry/refresh", "client_id" to id.toString())
                         }
                     }
