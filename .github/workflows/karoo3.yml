@@ -31,14 +31,14 @@ jobs:
       run:
         working-directory: karoo3
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: "17"
 
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@v6
 
       # karoo-ext is only on GitHub Packages; build it from source into mavenLocal instead (no token needed).
       - name: karoo-ext 1.1.9 to mavenLocal
@@ -92,14 +92,14 @@ jobs:
             cp app/build/outputs/apk/debug/app-debug.apk "homewind-karoo3-v${{ steps.version.outputs.name }}.apk"
           fi
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: homewind-karoo3-v${{ steps.version.outputs.name }}
           path: karoo3/homewind-karoo3-v${{ steps.version.outputs.name }}.apk
 
       - name: Release
         if: github.event_name == 'push' && github.ref == 'refs/heads/main' && steps.version.outputs.new == 'true'
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ steps.version.outputs.tag }}
           target_commitish: ${{ github.sha }}
