@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Homewind</string>
+    <string name="field_status">Homewind</string>
+    <string name="field_status_description">Fan mode, fan speed and fan states</string>
+    <string name="field_control">Homewind control</string>
+    <string name="field_control_description">Fan speed with minus and plus keys</string>
+    <string name="field_fan">Homewind fan %</string>
+    <string name="field_fan_description">Fan speed in percent</string>
+    <string name="action_plus">Homewind +</string>
+    <string name="action_minus">Homewind −</string>
+    <string name="action_mode">Homewind mode</string>
+</resources>

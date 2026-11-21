@@ -1,0 +1,38 @@
+# --- OS / editors ---
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.iml
+*.swp
+
+# --- Gradle / Android (karoo3) ---
+.gradle/
+build/
+local.properties
+captures/
+.externalNativeBuild/
+.cxx/
+*.apk
+*.aab
+*.ap_
+*.dex
+output-metadata.json
+
+# Signing: never commit keys or their passwords
+*.jks
+*.keystore
+keystore.properties
+keystore.env
+
+# --- Garmin Connect IQ (planned) ---
+bin/
+*.prg
+*.iq
+developer_key*
+*.der
+*.pem
+
+# --- Misc ---
+*.log
+.env
