@@ -74,10 +74,10 @@ private val EMPTY = Color(0xFF303132)
 private val CONTROL = Color(0xFF1E1E2A)
 private val BACKGROUND = Color(0xFF000000)
 private val MUTED = Color(0xB3FFFFFF)
-private val HR_PINK = Color(0xFFF00F66)
-private val POWER = Color(0xFF7A5AF8)
+private val HR_ON = Color(0xFFF00F66)
+private val POWER_ON = Color(0xFF7A5AF8)
 private val POWER_OFF = Color(0xFF322566)
-private val CADENCE = Color(0xFF0E7FA3)
+private val CADENCE_ON = Color(0xFF0E7FA3)
 private val CADENCE_OFF = Color(0xFF0A2933)
 private val HR_OFF = Color(0xFF4A0520)
 
@@ -284,9 +284,9 @@ class AppsField(extension: String) : HomewindGraphicField(extension, "homewind-a
 // ---- sensors ---------------------------------------------------------------------------------
 
 private enum class Kind(val icon: Int, val on: Color, val off: Color, val unit: String) {
-    HR(R.drawable.ic_heart, HR_PINK, HR_OFF, ""),
-    POWER(R.drawable.ic_bolt, POWER, POWER_OFF, " W"),
-    CADENCE(R.drawable.ic_crank, CADENCE, CADENCE_OFF, " rpm"),
+    HR(R.drawable.ic_heart, HR_ON, HR_OFF, ""),
+    POWER(R.drawable.ic_bolt, POWER_ON, POWER_OFF, " W"),
+    CADENCE(R.drawable.ic_crank, CADENCE_ON, CADENCE_OFF, " rpm"),
 }
 
 private fun row(kind: Kind, hw: HomewindState): SensorRow = when (kind) {
