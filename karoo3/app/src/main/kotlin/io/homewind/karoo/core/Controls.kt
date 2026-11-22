@@ -52,6 +52,18 @@ object HrStep {
         }
     }
 
+    /**
+     * True when a step in [direction] would change nothing (key shown inactive).
+     * Uses Homewind's `limit=` when reported, otherwise the range and the hard limits.
+     * PLUS (more wind) moves the range down, so it stops at the lower limit.
+     */
+    fun blocked(hw: HomewindState, direction: Direction): Boolean = when (hw.limit) {
+        HrLimit.MIN -> direction == Direction.PLUS
+        HrLimit.MAX -> direction == Direction.MINUS
+        HrLimit.NONE -> false
+        null -> plan(hw.hrMin, hw.hrMax, direction) == Plan.AtLimit
+    }
+
     /** Parses `{"min":75,"max":155}`, the answer of setmin/setmax. */
     fun parseRange(body: String): Pair<Int, Int>? {
         val min = Regex("\"min\"\\s*:\\s*(\\d+)").find(body)?.groupValues?.get(1)?.toIntOrNull()

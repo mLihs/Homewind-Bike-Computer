@@ -14,6 +14,9 @@ enum class FanMode(val wire: Int, val api: String, val label: String) {
 /** One dot per fan, same meaning and colours as the Touch display (concept V2). */
 enum class FanDot { ON, OFF, ERROR, EMPTY }
 
+/** Which end of the HR range is at its hard limit (50 / 200 bpm). */
+enum class HrLimit { NONE, MIN, MAX }
+
 enum class SensorType(val wire: Int) {
     HR(0), CSC(1), PWR(2);
 
@@ -72,6 +75,8 @@ data class HomewindState(
     /** An app was connected at least once while connected (orange badge when it drops). */
     val appWasConnected: Boolean = false,
     val bike: BikeMetrics? = null,
+    /** HR range at a hard limit, from `GET /api/v1/state` (`limit=`); null = not reported. */
+    val limit: HrLimit? = null,
     /** The power meter delivered cadence once (keeps the cadence row, as on the Touch). */
     val cadenceFromPowerMeterSeen: Boolean = false,
 ) {

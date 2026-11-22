@@ -29,6 +29,7 @@ import io.homewind.karoo.R
 import io.homewind.karoo.core.FanMode
 import io.homewind.karoo.core.HeatScale
 import io.homewind.karoo.core.HomewindState
+import io.homewind.karoo.core.HrStep
 import io.homewind.karoo.core.Link
 import io.homewind.karoo.ui.CONTROL
 import io.homewind.karoo.ui.Card
@@ -50,7 +51,7 @@ import java.util.UUID
 abstract class FanField(extension: String, typeId: String) : HomewindGraphicField(extension, typeId) {
     override fun renderKey(state: HomewindRuntime.FieldState): Any {
         val hw = state.hw
-        return listOf(state.link, state.error, hw.mode, hw.effective, hw.targetOn, hw.targetPct, hw.fans, hw.hrMin, hw.hrMax, hw.ftpW)
+        return listOf(state.link, state.error, hw.mode, hw.effective, hw.targetOn, hw.targetPct, hw.fans, hw.hrMin, hw.hrMax, hw.ftpW, hw.limit)
     }
 }
 
@@ -93,7 +94,7 @@ class ControlField(extension: String) : FanField(extension, "homewind-control") 
     override fun Content(config: ViewConfig, state: HomewindRuntime.FieldState) {
         if (!state.hw.hasFanControl) { Waiting(); return }
         Row(modifier = GlanceModifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
-            Key(R.drawable.ic_minus, actionRunCallback<MinusAction>(), GlanceModifier.width(56.dp).fillMaxHeight())
+            Key(R.drawable.ic_minus, actionRunCallback<MinusAction>(), GlanceModifier.width(56.dp).fillMaxHeight(), minusEnabled(state.hw))
             Column(
                 modifier = GlanceModifier.defaultWeight().fillMaxHeight().padding(horizontal = 2.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -106,7 +107,7 @@ class ControlField(extension: String) : FanField(extension, "homewind-control") 
                 if (heightDp >= 120) Dots(state.hw)
                 rangeLine(state.hw)?.let { Text(it, style = small(), maxLines = 1) }
             }
-            Key(R.drawable.ic_plus, actionRunCallback<PlusAction>(), GlanceModifier.width(56.dp).fillMaxHeight())
+            Key(R.drawable.ic_plus, actionRunCallback<PlusAction>(), GlanceModifier.width(56.dp).fillMaxHeight(), plusEnabled(state.hw))
         }
     }
 }
@@ -114,13 +115,14 @@ class ControlField(extension: String) : FanField(extension, "homewind-control") 
 /** "Homewind − +" (small): the two keys only. */
 class KeysField(extension: String) : FanField(extension, "homewind-keys") {
     // The keys look the same in every state; redraw only when the connection changes.
-    override fun renderKey(state: HomewindRuntime.FieldState): Any = listOf(state.link, state.error)
+    override fun renderKey(state: HomewindRuntime.FieldState): Any =
+        listOf(state.link, state.error, plusEnabled(state.hw), minusEnabled(state.hw))
 
     @Composable
     override fun Content(config: ViewConfig, state: HomewindRuntime.FieldState) {
         Row(modifier = GlanceModifier.fillMaxSize()) {
-            Key(R.drawable.ic_minus, actionRunCallback<MinusAction>(), GlanceModifier.defaultWeight().fillMaxHeight())
-            Key(R.drawable.ic_plus, actionRunCallback<PlusAction>(), GlanceModifier.defaultWeight().fillMaxHeight())
+            Key(R.drawable.ic_minus, actionRunCallback<MinusAction>(), GlanceModifier.defaultWeight().fillMaxHeight(), minusEnabled(state.hw))
+            Key(R.drawable.ic_plus, actionRunCallback<PlusAction>(), GlanceModifier.defaultWeight().fillMaxHeight(), plusEnabled(state.hw))
         }
     }
 }
@@ -166,6 +168,10 @@ class FanSpeedField(extension: String, private val context: Context) : DataTypeI
         emitter.setCancellable { job.cancel() }
     }
 }
+
+private fun plusEnabled(hw: HomewindState) = !HrStep.blocked(hw, HrStep.Direction.PLUS)
+
+private fun minusEnabled(hw: HomewindState) = !HrStep.blocked(hw, HrStep.Direction.MINUS)
 
 /** "HR 80–160 · FTP 250" for the control field; FTP only in Hybrid, where it acts on the fan. */
 private fun rangeLine(hw: HomewindState): String? {

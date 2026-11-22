@@ -56,7 +56,7 @@ class SettingsActivity : Activity() {
         root.addView(hostField, LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT))
 
         root.addView(button("Test and save") { testAndSave() })
-        root.addView(button("Live test (WebSocket, 12 s)") { liveTest() })
+        root.addView(button("Live test (12 s)") { liveTest() })
         status = text(statusLine(), 14f)
         root.addView(status)
 
@@ -137,7 +137,7 @@ class SettingsActivity : Activity() {
 
     /**
      * Opens the same connection the data fields use and shows what arrives, or why
-     * it fails. Takes one of Homewind's two WebSocket slots for 12 s.
+     * it fails. Reads /api/v1/state; only older firmware takes a WebSocket slot for 12 s.
      */
     private fun liveTest() {
         if (Prefs.host(this) == null) {
@@ -169,6 +169,13 @@ class SettingsActivity : Activity() {
         val hw = s.hw
         return buildString {
             append("Connection: ").append(s.link)
+            append(" · ").append(
+                when (s.api) {
+                    HomewindRuntime.Api.STATE -> "state API"
+                    HomewindRuntime.Api.WEBSOCKET -> "WebSocket"
+                    HomewindRuntime.Api.UNKNOWN -> "probing"
+                },
+            )
             s.error?.let { append("\nLast error: ").append(it) }
             append("\nMode: ").append(hw.mode?.label ?: "–")
             hw.effective?.takeIf { it != hw.mode }?.let { append(" (runs as ").append(it.label).append(")") }

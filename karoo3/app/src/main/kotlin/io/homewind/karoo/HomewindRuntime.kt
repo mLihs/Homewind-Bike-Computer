@@ -15,6 +15,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.channels.Channel
+import io.homewind.karoo.core.StateParser
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -36,17 +38,22 @@ import kotlin.coroutines.resume
 /**
  * One connection to Homewind per process, shared by the data fields and the bonus actions.
  *
- * State comes from the WebSocket `/ws` (Homewind 2.x has no HTTP read for fan mode, fan
- * speed or the HR range); actions go through HTTP ([HomewindActions]). The WebSocket takes
- * one of Homewind's two browser slots, so it is open only while somebody needs it: a
- * Homewind field on screen, a ride being recorded, or a bonus action for a few seconds.
+ * State comes from `GET /api/v1/state` every [POLL_MS] (Homewind 2.2; takes no WebSocket
+ * slot). Older firmware answers 404 there; then the state comes from the WebSocket `/ws`,
+ * which takes one of Homewind's two browser slots. Either way the connection runs only
+ * while somebody needs it: a Homewind field on screen, a ride being recorded, or a bonus
+ * action for a few seconds. Actions go through HTTP ([HomewindActions]).
  */
 object HomewindRuntime {
     /** [error]: why the last connection attempt ended (shown under "Offline"). */
+    /** How the state is read. */
+    enum class Api { UNKNOWN, STATE, WEBSOCKET }
+
     data class FieldState(
         val link: Link,
         val hw: HomewindState,
         val error: String? = null,
+        val api: Api = Api.UNKNOWN,
         /**
          * True once HR range and fan control arrived on the current connection, so actions
          * never plan from values of an earlier connection.
@@ -64,6 +71,15 @@ object HomewindRuntime {
     /** Keep the connection this long after the last user left (page swipes, repeated button presses). */
     private const val RELEASE_GRACE_MS = 10_000L
 
+    /** State poll interval (2–3 s is fine for Homewind). */
+    private const val POLL_MS = 2_500L
+
+    /** Poll failures in a row tolerated before the field shows "Offline". */
+    private const val POLL_MISSES = 2
+
+    /** Read the state again at once (after an action). */
+    private val pollNow = Channel<Unit>(Channel.CONFLATED)
+
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val _field = MutableStateFlow(FieldState(Link.IDLE, HomewindState()))
     val field: StateFlow<FieldState> = _field.asStateFlow()
@@ -79,6 +95,8 @@ object HomewindRuntime {
 
     /** Increases with every WebSocket attempt; callbacks of older sockets are ignored. */
     @Volatile private var generation = 0L
+
+    @Volatile private var api = Api.UNKNOWN
 
     // ---- lifecycle -------------------------------------------------------------------------
 
@@ -128,6 +146,7 @@ object HomewindRuntime {
             loop?.cancel()
             generation++
             history.clear()
+            api = Api.UNKNOWN
             _field.value = FieldState(Link.IDLE, HomewindState())
             loop = if (users.isNotEmpty()) startLoop() else null
         }
@@ -144,6 +163,7 @@ object HomewindRuntime {
     }
 
     private fun startLoop(): Job = scope.launch {
+        api = Api.UNKNOWN // probe again: the firmware may have been updated meanwhile
         launch { sampleLoop() }
         connectLoop()
     }
@@ -176,7 +196,8 @@ object HomewindRuntime {
                 continue
             }
             setLink(Link.CONNECTING)
-            val outcome = connectOnce(host)
+            val outcome = if (api == Api.WEBSOCKET) connectOnce(host) else pollSession(host)
+            if (outcome.link == Link.CONNECTING) continue // state API missing: WebSocket next
             if (outcome.opened) { backoffMs = 3_000L; fastRetries = 0; fullWaits = 0 }
             when (outcome.link) {
                 Link.FULL -> {
@@ -204,7 +225,55 @@ object HomewindRuntime {
         }
     }
 
-    /** Result of one WebSocket attempt. */
+    /**
+     * Reads `/api/v1/state` until it fails. Returns [Link.CONNECTING] when the firmware has no
+     * state endpoint (404 or no `v=`), after switching to the WebSocket.
+     */
+    private suspend fun pollSession(host: String): Outcome {
+        var opened = false
+        var misses = 0
+        val gen = ++generation
+        while (currentCoroutineContext().isActive) {
+            val error: Outcome? = try {
+                val (code, body) = HomewindHttp.get(host, StateParser.PATH)
+                val parsed = if (code == 200) StateParser.parse(body, _field.value.hw) else null
+                when {
+                    parsed != null -> {
+                        if (gen != generation) return Outcome(Link.IDLE, opened, null)
+                        opened = true
+                        misses = 0
+                        api = Api.STATE
+                        _field.update { it.copy(link = Link.CONNECTED, hw = parsed, error = null, api = Api.STATE, fresh = true) }
+                        null
+                    }
+                    !opened && (code == 404 || code == 200) -> {
+                        api = Api.WEBSOCKET
+                        _field.update { it.copy(api = Api.WEBSOCKET) }
+                        return Outcome(Link.CONNECTING, false, null)
+                    }
+                    code == 503 -> { setError(NetError.BUSY.text); Outcome(Link.BUSY, opened, NetError.BUSY) }
+                    else -> { setError("HTTP $code ${body.take(40)}".trim()); Outcome(Link.UNREACHABLE, opened, NetError.OTHER) }
+                }
+            } catch (e: Exception) {
+                val kind = HomewindHttp.logFailure(e, null, host, "state")
+                setError(kind.text)
+                Outcome(if (kind == NetError.BUSY) Link.BUSY else Link.UNREACHABLE, opened, kind)
+            }
+            if (error != null) {
+                // Connected: one or two missed polls keep the last state (Wi-Fi hiccup).
+                if (!opened || ++misses > POLL_MISSES) return error
+            }
+            withTimeoutOrNull(POLL_MS) { pollNow.receive() }
+        }
+        return Outcome(Link.IDLE, opened, null)
+    }
+
+    /** Next poll at once (after an action); no effect on the WebSocket path. */
+    fun refreshSoon() {
+        pollNow.trySend(Unit)
+    }
+
+    /** Result of one connection attempt. */
     private data class Outcome(val link: Link, val opened: Boolean, val error: NetError?)
 
     /** Runs until the socket closes; returns why it ended and whether it was open. */
@@ -223,6 +292,7 @@ object HomewindRuntime {
                 override fun onOpen(webSocket: WebSocket, response: Response) {
                     if (!current()) return
                     opened = true
+                    _field.update { it.copy(api = Api.WEBSOCKET) }
                     // New connection: fan list, sensors and trainer have to arrive again (staged connect or refresh).
                     _field.update {
                         it.copy(link = Link.CONNECTED, hw = it.hw.copy(fansKnown = false, sensors = null, clientId = null), error = null, fresh = false)

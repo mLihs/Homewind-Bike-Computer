@@ -155,15 +155,17 @@ internal fun ModeButton(hw: HomewindState, modifier: GlanceModifier) {
     }
 }
 
+/** Plus/minus key; [enabled] false at the HR limit: icon at about 25 %, no tap (decided 2026-11-21). */
 @Composable
-internal fun Key(icon: Int, action: Action, modifier: GlanceModifier) {
+internal fun Key(icon: Int, action: Action, modifier: GlanceModifier, enabled: Boolean = true) {
     Box(modifier = modifier.padding(2.dp)) {
-        Rounded(CONTROL, GlanceModifier.fillMaxSize().clickable(action), CONTROL_RADIUS) {
+        val base = GlanceModifier.fillMaxSize()
+        Rounded(CONTROL, if (enabled) base.clickable(action) else base, CONTROL_RADIUS) {
             Image(
                 provider = ImageProvider(icon),
                 contentDescription = null,
                 modifier = GlanceModifier.size(24.dp),
-                colorFilter = ColorFilter.tint(ColorProvider(Color.White)),
+                colorFilter = ColorFilter.tint(ColorProvider(if (enabled) Color.White else KEY_INACTIVE)),
             )
         }
     }

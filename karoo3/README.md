@@ -86,31 +86,34 @@ Which buttons can carry Karoo actions: bonus buttons on SRAM RED AXS and Force A
 3. **Search Homewind** finds it with mDNS (`homewind-xxxxxxxx`). If nothing is found (some routers block multicast), type the IP address. The Homewind web UI or the router shows it. A fixed IP for Homewind in the router helps.
 4. **Test and save**. On failure the screen shows the reason.
 5. The setup screen shows a QR code to the Homewind web UI once an address is saved.
-6. Optional: **Live test** opens the same connection as the data fields for 12 s and shows what arrives (mode, fan %, HR range, fans) or the error.
+6. Optional: **Live test** opens the same connection as the data fields for 12 s and shows the interface (state API or WebSocket), what arrives (mode, fan %, HR range, fans) or the error.
 7. Add a Homewind field to a ride profile and/or map the bonus actions.
 
 The extension connects only while a Homewind field is on screen or a ride is recording, and disconnects 10 s after the last of them is gone (page swipes do not reconnect). A bonus action without a connection opens it for that action.
 
-## How it talks to Homewind (2.0)
+## How it talks to Homewind
 
-| Purpose | Homewind 2.0 interface |
-| --- | --- |
-| State | WebSocket `ws://<host>/ws`: `SENSORS_SNAPSHOT` (0x02), `SENSOR_CONN_STATE` (0x03), `HEART_RATE` (0x06), `FANS_SNAPSHOT` (0x07), `HEART_RATE_SETTINGS` (0x0B), `CLIENT_ID` (0x0C), `BIKE_METRICS` (0x0D), `FAN_CONTROL` (0x0E), `TRAINER_STATUS` (0x0F), `APP_STATUS` (0x10) |
-| Fan list, sensors, trainer as second client | `POST /api/v1/action/telemetry/refresh?client_id=<id>` (once, only if they did not arrive) |
-| Plus / minus | `POST /api/v1/action/heartrate/setmin?value=` and `setmax?value=`. Lowering sets min first, raising sets max first, so the firmware's gap clamp cannot change either value |
-| Mode | `POST /api/v1/action/fanmode/set?mode=pure\|smart\|hybrid`. On 409 for Hybrid the extension sets Pure |
-| Connection test | `GET /api/v1/system/info` |
+Homewind 2.2 has a state endpoint; the extension uses it when present and falls back to the WebSocket for 2.0/2.1 (`/api/v1/state` answers 404 there). The setup screen's live test shows which one is in use.
 
-All POSTs send `X-Homewind: 1` (Homewind's CSRF check).
+| Purpose | Homewind 2.2 | Homewind 2.0 / 2.1 (fallback) |
+| --- | --- | --- |
+| State | `GET /api/v1/state` every 2.5 s, `key=value` lines (see `core/StateParser.kt`); no WebSocket slot | WebSocket `ws://<host>/ws` (frames 0x02, 0x03, 0x06, 0x07, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10) plus `telemetry/refresh?client_id=` once as second client |
+| Plus / minus | `POST /api/v1/action/fan/step?dir=up\|down`; `up` = more wind (range −5), as on the Touch. 409 `ERR:limit_min`/`ERR:limit_max`: key inactive, no message; other 409 (maintenance): "Busy" | `heartrate/setmin` and `setmax` (lowering sets min first, raising max first) |
+| Mode | `POST /api/v1/action/fanmode/cycle`; Homewind skips a blocked Hybrid, then the next state shows `mode` and `effective` | `fanmode/set?mode=`; on 409 for Hybrid the extension sets Pure |
+| Connection test | `GET /api/v1/system/info` | same |
 
-## Limits of the MVP
+All POSTs send `X-Homewind: 1` (Homewind's CSRF check; without it 403). The orange "was connected" badges are computed in the extension from consecutive polls; a drop shorter than one poll interval is not seen.
+
+**Not released yet:** Karoo polling plus two browsers on the WebSocket at the same time is cleared only after the heap test (gate G7, `docs/HEAP_BENCHMARK.md` in the Homewind repo).
+
+## Limits with Homewind 2.0 / 2.1
 
 - **Takes a browser slot.** Homewind 2.0 has no HTTP read for fan mode, fan speed or the HR range; only the WebSocket carries them. Homewind allows two WebSocket clients (`HW_WEBSOCKET_MAX_CLIENTS = 2`). While the Karoo is connected, only one browser fits: a second browser gets "max clients reached" (seen in the first test). If two browsers were there first, the Karoo shows *Web UI full* and tries again every 30 s.
 - **mDNS search is not always reliable** on the Karoo (0.1.2 holds a multicast lock during the search). Entering the IP always works; give Homewind a fixed IP in the router.
 - **Two NVS writes per tap.** 2.0 writes HR min and max separately and at once. Homewind 2.1 brings the shift request with a 3 s write debounce.
 - **Minus acts with delay in Smart and Hybrid.** 2.0 keeps the cool-down brake; the one-time hold release comes with 2.1.
 - **Fan dots by order, not by slot.** `FANS_SNAPSHOT` lists configured fans without gaps. With an empty slot in the middle the dots shift left.
-- **No limit state.** At 50/200 bpm a key simply does nothing (feature request: inactive keys).
+- **Limit state derived.** Without `limit=` the extension greys out a key from the HR range and the 50/200 bpm limits.
 - **Placeholder icon.** `ic_homewind.xml` is a placeholder; replace it with the Homewind fan icon.
 
 ## Release 2 (with Homewind 2.2)

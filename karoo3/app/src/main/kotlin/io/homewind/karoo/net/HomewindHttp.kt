@@ -54,6 +54,12 @@ object HomewindHttp {
         }
     }
 
+    /** GET; returns (status, body). Throws on a network error, for [logFailure] by the caller. Blocking. */
+    fun get(host: String, path: String): Pair<Int, String> {
+        val request = Request.Builder().url("http://$host$path").get().build()
+        return client.newCall(request).execute().use { it.code to (it.body?.string() ?: "") }
+    }
+
     /** Setup screen: GET /api/v1/system/info. Returns (info, null) or (null, error text). Blocking. */
     fun testConnection(host: String): Pair<String?, String?> {
         val request = Request.Builder().url("http://$host/api/v1/system/info").get().build()
