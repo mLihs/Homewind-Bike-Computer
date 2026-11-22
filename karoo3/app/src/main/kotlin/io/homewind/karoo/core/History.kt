@@ -5,10 +5,10 @@ data class Sample(val fanPct: Int?, val hr: Int?)
 
 /**
  * Ring buffer for the graph fields: the last [capacity] samples, oldest first.
- * The runtime adds one sample every [INTERVAL_MS] while connected, so the default
- * capacity covers 10 minutes.
+ * The runtime adds one sample every [INTERVAL_MS] while the connection is wanted (empty
+ * samples while it is down, so outages show as gaps), so the default capacity covers 10 minutes.
  */
-class History(private val capacity: Int = 300) {
+class History(val capacity: Int = 300) {
     private val buf = ArrayDeque<Sample>(capacity)
 
     @Synchronized

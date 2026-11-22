@@ -19,7 +19,7 @@ import android.util.Log
 class Discovery(context: Context, private val onFound: (name: String, host: String) -> Unit) {
     private val nsd = context.getSystemService(Context.NSD_SERVICE) as NsdManager
     private val main = Handler(Looper.getMainLooper())
-    private var listener: NsdManager.DiscoveryListener? = null
+    @Volatile private var listener: NsdManager.DiscoveryListener? = null
     private val seen = mutableSetOf<String>()
 
     // Some Android builds drop mDNS answers unless the app holds a multicast lock.
@@ -56,19 +56,20 @@ class Discovery(context: Context, private val onFound: (name: String, host: Stri
             override fun onResolveFailed(serviceInfo: NsdServiceInfo, errorCode: Int) {
                 Log.w(TAG, "resolve failed for ${serviceInfo.serviceName}: $errorCode")
                 // FAILURE_ALREADY_ACTIVE: one resolve at a time; try again shortly.
-                if (errorCode == NsdManager.FAILURE_ALREADY_ACTIVE) main.postDelayed({ resolve(info) }, 500)
+                if (errorCode == NsdManager.FAILURE_ALREADY_ACTIVE) main.postDelayed({ if (listener != null) resolve(info) }, 500)
             }
 
             override fun onServiceResolved(serviceInfo: NsdServiceInfo) {
                 val ip = serviceInfo.host?.hostAddress ?: return
                 val port = serviceInfo.port
                 val host = if (port == 80 || port <= 0) ip else "$ip:$port"
-                main.post { onFound(serviceInfo.serviceName, host) }
+                main.post { if (listener != null) onFound(serviceInfo.serviceName, host) }
             }
         })
     }
 
     fun stop() {
+        main.removeCallbacksAndMessages(null) // pending resolve retries and results
         listener?.let { runCatching { nsd.stopServiceDiscovery(it) } }
         listener = null
         runCatching { if (multicastLock.isHeld) multicastLock.release() }

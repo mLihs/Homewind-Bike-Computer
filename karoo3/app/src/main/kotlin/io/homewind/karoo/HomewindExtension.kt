@@ -6,6 +6,18 @@ import io.hammerhead.karooext.extension.KarooExtension
 import io.hammerhead.karooext.models.InRideAlert
 import io.hammerhead.karooext.models.RideState
 import io.homewind.karoo.core.HrStep
+import io.homewind.karoo.fields.AppsField
+import io.homewind.karoo.fields.ControlField
+import io.homewind.karoo.fields.FanColorField
+import io.homewind.karoo.fields.FanSpeedField
+import io.homewind.karoo.fields.GraphField
+import io.homewind.karoo.fields.KeysField
+import io.homewind.karoo.fields.ModeField
+import io.homewind.karoo.fields.SensorsField
+import io.homewind.karoo.fields.StatusField
+import io.homewind.karoo.fields.cadenceField
+import io.homewind.karoo.fields.hrField
+import io.homewind.karoo.fields.powerField
 
 /**
  * Homewind for Karoo 3, MVP for Homewind 2.0.
@@ -80,9 +92,9 @@ class HomewindExtension : KarooExtension(EXTENSION_ID, BuildConfig.VERSION_NAME)
     override fun onBonusAction(actionId: String) {
         Log.d(TAG, "onBonusAction $actionId")
         when (actionId) {
-            ACTION_PLUS -> HomewindRuntime.step(HrStep.Direction.PLUS)
-            ACTION_MINUS -> HomewindRuntime.step(HrStep.Direction.MINUS)
-            ACTION_MODE -> HomewindRuntime.cycleMode()
+            ACTION_PLUS -> HomewindActions.step(HrStep.Direction.PLUS)
+            ACTION_MINUS -> HomewindActions.step(HrStep.Direction.MINUS)
+            ACTION_MODE -> HomewindActions.cycleMode()
             else -> Log.w(TAG, "unknown action $actionId")
         }
     }

@@ -28,7 +28,18 @@ object GraphRenderer {
     private const val GREEN = 0xFF06BB60.toInt()
     private const val PINK = 0xFFF00F66.toInt()
     private const val GRID = 0x33FFFFFF
+    private const val BACKGROUND = 0xFF000000.toInt()
 
+    // Reused between draws; render() is synchronized because two graph fields may draw at once.
+    private val grid = Paint()
+    private val bar = Paint().apply { isAntiAlias = false }
+    private val area = Paint().apply { color = (GREEN and 0x00FFFFFF) or 0x55000000; isAntiAlias = true }
+    private val fanLine = Paint().apply { color = GREEN; style = Paint.Style.STROKE; isAntiAlias = true }
+    private val dashed = Paint().apply { color = (PINK and 0x00FFFFFF) or 0x66000000 }
+    private val hrLine = Paint().apply { style = Paint.Style.STROKE; isAntiAlias = true; strokeJoin = Paint.Join.ROUND }
+    private var dashDensity = 0f
+
+    @Synchronized
     fun render(
         width: Int,
         height: Int,
@@ -41,8 +52,18 @@ object GraphRenderer {
     ): Bitmap {
         val w = width.coerceAtLeast(10)
         val h = height.coerceAtLeast(10)
-        val bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
+        // RGB_565 on the black tile: half the bytes of ARGB_8888 for every RemoteViews update.
+        val bmp = Bitmap.createBitmap(w, h, Bitmap.Config.RGB_565)
+        bmp.eraseColor(BACKGROUND)
         val c = Canvas(bmp)
+        if (dashDensity != density) {
+            dashDensity = density
+            grid.apply { color = GRID; strokeWidth = density }
+            fanLine.strokeWidth = 2 * density
+            hrLine.strokeWidth = 2 * density
+            dashed.strokeWidth = density
+            dashed.pathEffect = DashPathEffect(floatArrayOf(4 * density, 4 * density), 0f)
+        }
         val step = w.toFloat() / capacity
         val x0 = w - samples.size * step // oldest sample's left edge
         fun fanY(pct: Int) = h - pct.coerceIn(0, 100) / 100f * h
@@ -50,12 +71,11 @@ object GraphRenderer {
         fun hrY(hr: Int) = h - (hr - lo).toFloat() / (hi - lo) * h
 
         // Grid: 50 % line.
-        c.drawLine(0f, h / 2f, w.toFloat(), h / 2f, Paint().apply { color = GRID; strokeWidth = density })
+        c.drawLine(0f, h / 2f, w.toFloat(), h / 2f, grid)
 
         // Fan speed.
         when (style) {
             Style.ZONES -> {
-                val bar = Paint().apply { isAntiAlias = false }
                 samples.forEachIndexed { i, s ->
                     val pct = s.fanPct ?: return@forEachIndexed
                     bar.color = HeatScale.colorFor(pct)
@@ -64,10 +84,6 @@ object GraphRenderer {
                 }
             }
             Style.TWO_COLOR -> {
-                val area = Paint().apply { color = (GREEN and 0x00FFFFFF) or 0x55000000; isAntiAlias = true }
-                val line = Paint().apply {
-                    color = GREEN; strokeWidth = 2 * density; this.style = Paint.Style.STROKE; isAntiAlias = true
-                }
                 forEachRun(samples, { it.fanPct }) { run ->
                     val path = Path()
                     val outline = Path()
@@ -82,27 +98,16 @@ object GraphRenderer {
                     path.lineTo(x0 + (run.last().first + 0.5f) * step, h.toFloat())
                     path.close()
                     c.drawPath(path, area)
-                    c.drawPath(outline, line)
+                    c.drawPath(outline, fanLine)
                 }
             }
         }
 
         // Homewind's HR range.
-        val dashed = Paint().apply {
-            color = (PINK and 0x00FFFFFF) or 0x66000000
-            strokeWidth = density
-            pathEffect = DashPathEffect(floatArrayOf(4 * density, 4 * density), 0f)
-        }
         listOfNotNull(hrMin, hrMax).forEach { c.drawLine(0f, hrY(it), w.toFloat(), hrY(it), dashed) }
 
         // Heart rate.
-        val hrLine = Paint().apply {
-            color = if (style == Style.ZONES) 0xFFFFFFFF.toInt() else PINK
-            strokeWidth = 2 * density
-            this.style = Paint.Style.STROKE
-            isAntiAlias = true
-            strokeJoin = Paint.Join.ROUND
-        }
+        hrLine.color = if (style == Style.ZONES) 0xFFFFFFFF.toInt() else PINK
         forEachRun(samples, { it.hr }) { run ->
             val path = Path()
             run.forEachIndexed { k, (i, hr) ->

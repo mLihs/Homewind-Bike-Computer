@@ -13,6 +13,7 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
+import io.homewind.karoo.net.HomewindHttp
 import kotlin.concurrent.thread
 
 /**
@@ -27,6 +28,8 @@ class SettingsActivity : Activity() {
     private var discovery: Discovery? = null
     private var foundName: String? = null
     private var liveTestRunning = false
+    private var searchTimeout: Runnable? = null
+    private var liveTick: Runnable? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -98,13 +101,16 @@ class SettingsActivity : Activity() {
             })
         }.also { it.start() }
         // Nothing found: the router may block multicast; the IP field stays the fallback.
-        found.postDelayed({
+        searchTimeout?.let { found.removeCallbacks(it) } // a second search restarts the 8 s
+        val timeout = Runnable {
             discovery?.stop()
             if (!any) {
                 found.removeView(searching)
                 found.addView(text("Nothing found. Enter the IP address (Homewind web UI or your router shows it).", 14f))
             }
-        }, 8_000)
+        }
+        searchTimeout = timeout
+        found.postDelayed(timeout, 8_000)
     }
 
     private fun testAndSave() {
@@ -115,7 +121,7 @@ class SettingsActivity : Activity() {
         }
         status.text = "Testing $host…"
         thread {
-            val (info, error) = HomewindRuntime.testConnection(host)
+            val (info, error) = HomewindHttp.testConnection(host)
             runOnUiThread {
                 if (info != null) {
                     Prefs.save(this, host, foundName ?: Prefs.name(this).takeIf { Prefs.host(this) == host })
@@ -142,7 +148,7 @@ class SettingsActivity : Activity() {
         liveTestRunning = true
         HomewindRuntime.acquire(this, LIVE_TEST)
         val start = System.currentTimeMillis()
-        status.post(object : Runnable {
+        val tick = object : Runnable {
             override fun run() {
                 val seconds = (System.currentTimeMillis() - start) / 1000
                 val done = seconds >= 12
@@ -154,7 +160,9 @@ class SettingsActivity : Activity() {
                     status.postDelayed(this, 500)
                 }
             }
-        })
+        }
+        liveTick = tick
+        status.post(tick)
     }
 
     private fun describe(s: HomewindRuntime.FieldState): String {
@@ -172,6 +180,8 @@ class SettingsActivity : Activity() {
 
     override fun onDestroy() {
         if (liveTestRunning) HomewindRuntime.release(LIVE_TEST)
+        searchTimeout?.let { found.removeCallbacks(it) }
+        liveTick?.let { status.removeCallbacks(it) }
         discovery?.stop()
         super.onDestroy()
     }

@@ -61,7 +61,7 @@ Field texts when there is no data: *Set up* (no address), *Wi-Fi off* (Karoo Wi-
 | timeout | Homewind not answering (timeout) |
 | 503 | Homewind busy (update or maintenance) |
 
-Every failure is logged (`adb logcat -s HomewindRuntime`): kind, errno, Wi-Fi state, IP, step and the exception chain. HTTP and WebSocket are bound to the Wi-Fi network.
+Every failure is logged (`adb logcat -s HomewindHttp HomewindField`): kind, errno, Wi-Fi state, IP, step and the exception chain. HTTP and WebSocket are bound to the Wi-Fi network.
 
 **Rule for field texts:** no `%` in display names or descriptions followed by more text. The Karoo sideload installer failed with "Unknown error" on 0.2.1, the first version with such a text.
 
@@ -89,7 +89,7 @@ Which buttons can carry Karoo actions: bonus buttons on SRAM RED AXS and Force A
 6. Optional: **Live test** opens the same connection as the data fields for 12 s and shows what arrives (mode, fan %, HR range, fans) or the error.
 7. Add a Homewind field to a ride profile and/or map the bonus actions.
 
-The extension connects only while a Homewind field is on screen or a ride is recording, and disconnects otherwise.
+The extension connects only while a Homewind field is on screen or a ride is recording, and disconnects 10 s after the last of them is gone (page swipes do not reconnect). A bonus action without a connection opens it for that action.
 
 ## How it talks to Homewind (2.0)
 
@@ -157,17 +157,28 @@ Install: `adb install -r app/build/outputs/apk/debug/app-debug.apk` (Karoo via U
 4. Mode: Pure → Smart → Hybrid; without a power source Hybrid is skipped.
 5. Browser slots: Karoo + one browser works; with two browsers open the Karoo shows *Web UI full*, and connects within 30 s after one closes.
 6. Reconnect: switch Homewind off and on → *Offline*, then back without a Karoo restart.
-7. Ride end: after stopping the ride and leaving the ride screen the Karoo disconnects (web UI can take a second browser again).
+7. Ride end: after stopping the ride and leaving the ride screen the Karoo disconnects within 10 s (web UI can take a second browser again).
 8. **Heap on the XIAO** (no PSRAM): ride with HR, trainer mirror, Zwift, Karoo connected and one browser. Measure as in Homewind `docs/HEAP_BENCHMARK.md` and compare with the 2026-11-20 rows.
 
 ## Project layout
 
 ```
 app/src/main/kotlin/io/homewind/karoo/
-├── core/                 # plain Kotlin, unit tested: frame parser, plus/minus, mode cycle
+├── core/                 # plain Kotlin, unit tested: frame parser, plus/minus, mode cycle, display rules, history
+├── net/
+│   ├── HomewindHttp.kt   # OkHttp client (bound to Wi-Fi), POST, setup test, failure logging
+│   └── WifiWatcher.kt    # Wi-Fi state for the process
+├── fields/
+│   ├── FieldLifecycle.kt # view lifecycle: connection hold, redraw on change, at most 1/s, error isolation
+│   ├── FanFields.kt      # fan tiles, keys, mode, plain number field
+│   ├── SensorFields.kt   # sensors, HR, power, cadence, apps
+│   ├── GraphField.kt     # graphs
+│   └── TapActions.kt     # tap callbacks (plus, minus, mode)
+├── ui/                   # Glance building blocks and colours
 ├── HomewindExtension.kt  # KarooExtension: data types, bonus actions, ride state, alerts
-├── HomewindRuntime.kt    # WebSocket + HTTP to Homewind, shared state
-├── Fields.kt             # graphical fields (Glance) and number field
+├── HomewindRuntime.kt    # WebSocket, shared state, graph history
+├── HomewindActions.kt    # plus, minus, mode over HTTP
+├── GraphRenderer.kt      # graph bitmap
 ├── SettingsActivity.kt   # setup screen on the Karoo
 ├── Discovery.kt          # mDNS search
 └── Prefs.kt

@@ -90,6 +90,8 @@ data class HomewindState(
 enum class Link {
     /** No address set up yet. */
     NOT_CONFIGURED,
+    /** Nobody needs the connection right now (no Homewind field on screen, no ride). */
+    IDLE,
     CONNECTING,
     CONNECTED,
     /** The Karoo has no Wi-Fi (it turns Wi-Fi off in the ride app; Quick Settings turns it on). */
