@@ -51,7 +51,17 @@ Both draw Homewind's HR range (HR min/max, where the fan ramps from minimum to m
 
 Power source: power meter while it delivers, otherwise the trainer. Cadence source: cadence sensor, else power meter (once it sent cadence), else trainer (Touch concept rules).
 
-Field texts when there is no data: *Set up* (no address), *Wi-Fi off* (Karoo Wi-Fi off), *Offline* (no answer; the reason is shown below it), *Web UI full* (two browsers already connected, see "Limits").
+Field texts when there is no data: *Set up* (no address), *Wi-Fi off* (Karoo Wi-Fi off), *Offline* (no answer), *Busy* (Homewind answers 503: update or maintenance), *Web UI full* (two browsers already connected, see "Limits"). Below it the observed error in plain text (0.4.1, see `docs/HOMEWIND_DISCOVERY.md`):
+
+| Error | Text |
+| --- | --- |
+| Wi-Fi not connected / `ENETUNREACH` | Karoo not connected to Wi-Fi |
+| `EHOSTUNREACH` | Homewind not reachable (EHOSTUNREACH) — retried after 1 s, up to 3 times |
+| `ECONNREFUSED` | Connection refused (ECONNREFUSED) – IP may belong to another device |
+| timeout | Homewind not answering (timeout) |
+| 503 | Homewind busy (update or maintenance) |
+
+Every failure is logged (`adb logcat -s HomewindRuntime`): kind, errno, Wi-Fi state, IP, step and the exception chain. HTTP and WebSocket are bound to the Wi-Fi network.
 
 **Rule for field texts:** no `%` in display names or descriptions followed by more text. The Karoo sideload installer failed with "Unknown error" on 0.2.1, the first version with such a text.
 

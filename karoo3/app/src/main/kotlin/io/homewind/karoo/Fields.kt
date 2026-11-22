@@ -513,12 +513,13 @@ private fun LinkBlock(state: HomewindRuntime.FieldState) {
                 Link.WIFI_OFF -> "Wi-Fi off"
                 Link.UNREACHABLE -> "Offline"
                 Link.FULL -> "Web UI full"
+                Link.BUSY -> "Busy"
                 Link.CONNECTED -> "…"
             },
             style = bold(18),
             maxLines = 1,
         )
-        if (state.link == Link.UNREACHABLE || state.link == Link.FULL || state.link == Link.WIFI_OFF) {
+        if (state.link == Link.UNREACHABLE || state.link == Link.FULL || state.link == Link.WIFI_OFF || state.link == Link.BUSY) {
             state.error?.let {
                 Text(it, style = TextStyle(color = ColorProvider(MUTED), fontSize = 9.sp, textAlign = TextAlign.Center), maxLines = 2)
             }

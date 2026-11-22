@@ -12,6 +12,7 @@ import io.homewind.karoo.core.HomewindState
 import io.homewind.karoo.core.HrStep
 import io.homewind.karoo.core.Link
 import io.homewind.karoo.core.ModeCycle
+import io.homewind.karoo.core.NetError
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -74,13 +75,23 @@ object HomewindRuntime {
     /** Set by the extension service; shows a short in-ride alert. */
     @Volatile var alertSink: ((title: String, detail: String?) -> Unit)? = null
 
-    private val http = OkHttpClient.Builder()
+    /**
+     * HTTP and WebSocket client, bound to the Wi-Fi network when one is known
+     * (docs/HOMEWIND_DISCOVERY.md: insurance; the Karoo 3 has no cellular).
+     */
+    @Volatile private var http: OkHttpClient = buildClient(null)
+
+    private fun buildClient(network: Network?): OkHttpClient = OkHttpClient.Builder()
         .connectTimeout(3, TimeUnit.SECONDS)
         .readTimeout(5, TimeUnit.SECONDS)
         .writeTimeout(5, TimeUnit.SECONDS)
         .pingInterval(15, TimeUnit.SECONDS) // detects a dead link; AsyncWebSocket answers pings
         .retryOnConnectionFailure(false)
+        .apply { if (network != null) socketFactory(network.socketFactory) }
         .build()
+
+    /** Result of one WebSocket attempt. */
+    private data class Outcome(val link: Link, val opened: Boolean, val error: NetError?)
 
     private val usersLock = Any()
     private val users = mutableSetOf<String>()
@@ -100,8 +111,17 @@ object HomewindRuntime {
         val up = java.util.Collections.synchronizedSet(mutableSetOf<Network>())
         val request = NetworkRequest.Builder().addTransportType(NetworkCapabilities.TRANSPORT_WIFI).build()
         cm.registerNetworkCallback(request, object : ConnectivityManager.NetworkCallback() {
-            override fun onAvailable(network: Network) { up += network; wifiUp.value = true }
-            override fun onLost(network: Network) { up -= network; wifiUp.value = up.isNotEmpty() }
+            override fun onAvailable(network: Network) {
+                up += network
+                http = buildClient(network)
+                wifiUp.value = true
+            }
+            override fun onLost(network: Network) {
+                up -= network
+                val next = synchronized(up) { up.firstOrNull() }
+                http = buildClient(next)
+                wifiUp.value = next != null
+            }
         })
     }
 
@@ -152,6 +172,7 @@ object HomewindRuntime {
 
     private suspend fun connectLoop() {
         var backoffMs = 3_000L
+        var fastRetries = 0
         while (currentCoroutineContext().isActive) {
             val host = Prefs.host(appContext)
             if (host == null) {
@@ -168,26 +189,36 @@ object HomewindRuntime {
                 continue
             }
             setLink(Link.CONNECTING)
-            val (result, opened) = connectOnce(host)
-            if (opened) backoffMs = 3_000L
-            when (result) {
+            val outcome = connectOnce(host)
+            if (outcome.opened) { backoffMs = 3_000L; fastRetries = 0 }
+            when (outcome.link) {
                 Link.FULL -> {
                     setLink(Link.FULL)
                     delay(30_000) // a browser may close; do not hammer the device
                 }
+                Link.BUSY -> {
+                    setLink(Link.BUSY)
+                    delay(10_000) // update or maintenance: present, only busy; no re-discovery
+                }
                 else -> {
                     if (!wifiUp.value) continue // Wi-Fi went away: handled at the top of the loop
                     setLink(Link.UNREACHABLE)
-                    // Wait for the backoff, or less if Wi-Fi drops and comes back meanwhile.
-                    withTimeoutOrNull(backoffMs) { wifiUp.first { !it }; wifiUp.first { it } }
-                    backoffMs = (backoffMs * 2).coerceAtMost(30_000)
+                    if (outcome.error == NetError.HOST_UNREACHABLE && fastRetries < 3) {
+                        // EHOSTUNREACH: retry after 1 s, up to 3 times, then the normal backoff.
+                        fastRetries++
+                        delay(1_000)
+                    } else {
+                        // Wait for the backoff, or less if Wi-Fi drops and comes back meanwhile.
+                        withTimeoutOrNull(backoffMs) { wifiUp.first { !it }; wifiUp.first { it } }
+                        backoffMs = (backoffMs * 2).coerceAtMost(30_000)
+                    }
                 }
             }
         }
     }
 
     /** Runs until the socket closes; returns why it ended and whether it was open. */
-    private suspend fun connectOnce(host: String): Pair<Link, Boolean> = suspendCancellableCoroutine { cont ->
+    private suspend fun connectOnce(host: String): Outcome = suspendCancellableCoroutine { cont ->
         var refreshRequested = false
         var opened = false
         val request = Request.Builder().url("ws://$host/ws").build()
@@ -220,20 +251,51 @@ object HomewindRuntime {
             override fun onClosing(webSocket: WebSocket, code: Int, reason: String) {
                 webSocket.close(1000, null)
                 setError("closed $code ${reason.take(40)}".trim())
-                if (cont.isActive) cont.resume((if (code == 1008) Link.FULL else Link.UNREACHABLE) to opened)
+                if (cont.isActive) cont.resume(Outcome(if (code == 1008) Link.FULL else Link.UNREACHABLE, opened, null))
             }
 
             override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
-                Log.d(TAG, "WebSocket failure: ${t.message}")
-                val http = response?.let { " HTTP ${it.code}" }.orEmpty()
-                setError("${t.javaClass.simpleName}: ${t.message ?: ""}$http".take(80))
-                if (cont.isActive) cont.resume(Link.UNREACHABLE to opened)
+                val status = response?.code
+                val error = logFailure(t, status, host, "websocket")
+                setError(error.text)
+                val link = if (error == NetError.BUSY) Link.BUSY else Link.UNREACHABLE
+                if (cont.isActive) cont.resume(Outcome(link, opened, error))
             }
         })
         cont.invokeOnCancellation { ws.close(1000, null); ws.cancel() }
     }
 
     private fun setLink(link: Link) = _field.update { it.copy(link = link) }
+
+    /** Class names and messages of [t], its causes and suppressed exceptions. */
+    private fun chain(t: Throwable): List<String> {
+        val out = mutableListOf<String>()
+        val seen = mutableSetOf<Throwable>()
+        fun walk(e: Throwable?) {
+            if (e == null || !seen.add(e)) return
+            out += "${e.javaClass.name}: ${e.message ?: ""}"
+            e.suppressed.forEach { walk(it) }
+            walk(e.cause)
+        }
+        walk(t)
+        return out
+    }
+
+    /**
+     * Classifies and logs a failure as docs/HOMEWIND_DISCOVERY.md asks: exception type,
+     * errno, Wi-Fi state, IP tried, step.
+     */
+    private fun logFailure(t: Throwable, httpStatus: Int?, host: String, step: String): NetError {
+        val messages = chain(t)
+        val wifi = wifiUp.value
+        val error = NetError.classify(messages, wifi, httpStatus)
+        Log.w(
+            TAG,
+            "connect failed: kind=$error errno=${NetError.errno(messages) ?: "-"} wifi=$wifi ip=$host " +
+                "step=$step http=${httpStatus ?: "-"} chain=${messages.joinToString(" <- ")}",
+        )
+        return error
+    }
 
     /** One graph sample every 2 s while connected (runs as a child of the connect loop). */
     private suspend fun sampleLoop() {
@@ -347,6 +409,7 @@ object HomewindRuntime {
         val request = Request.Builder().url("http://$host/api/v1/system/info").get().build()
         return try {
             http.newCall(request).execute().use { r ->
+                if (r.code == 503) return null to NetError.BUSY.text
                 if (!r.isSuccessful) return null to "HTTP ${r.code} ${r.body?.string().orEmpty().take(60)}".trim()
                 val body = r.body?.string().orEmpty()
                 val name = Regex("^name=(.*)$", RegexOption.MULTILINE).find(body)?.groupValues?.get(1)
@@ -354,7 +417,9 @@ object HomewindRuntime {
                 listOfNotNull(name, version).joinToString(" ").ifEmpty { "OK" } to null
             }
         } catch (e: Exception) {
-            null to "${e.javaClass.simpleName}: ${e.message ?: ""}".take(100)
+            val error = logFailure(e, null, host, "setup-test")
+            val errno = NetError.errno(chain(e))
+            null to error.text + if (errno != null && errno !in error.text) " ($errno)" else ""
         }
     }
 

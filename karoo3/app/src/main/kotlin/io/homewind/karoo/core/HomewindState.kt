@@ -98,4 +98,6 @@ enum class Link {
     UNREACHABLE,
     /** Homewind refused the WebSocket: two browsers are already connected. */
     FULL,
+    /** Homewind answered 503: update or maintenance running; present, only busy. */
+    BUSY,
 }
