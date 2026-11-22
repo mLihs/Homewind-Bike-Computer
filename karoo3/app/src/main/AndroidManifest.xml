@@ -15,6 +15,11 @@
         android:supportsRtl="true"
         android:theme="@android:style/Theme.Material">
 
+        <!-- Updates: the Karoo fetches this manifest and offers new versions in the Extension Library. -->
+        <meta-data
+            android:name="io.hammerhead.karooext.MANIFEST_URL"
+            android:value="https://github.com/mLihs/Homewind-Bike-Computer/releases/download/karoo3-latest/manifest.json" />
+
         <activity
             android:name=".SettingsActivity"
             android:exported="true"

@@ -52,7 +52,7 @@ jobs:
         id: version
         run: |
           name=$(sed -n 's/.*versionName = "\(.*\)".*/\1/p' app/build.gradle.kts)
-          code=$(sed -n 's/.*versionCode = \([0-9]*\).*/\1/p' app/build.gradle.kts)
+          code=$(sed -n 's/^ *versionCode = \([0-9][0-9]*\).*/\1/p' app/build.gradle.kts)
           echo "name=$name" >> "$GITHUB_OUTPUT"
           echo "code=$code" >> "$GITHUB_OUTPUT"
           echo "tag=karoo3-v$name" >> "$GITHUB_OUTPUT"
@@ -62,6 +62,12 @@ jobs:
             echo "new=true" >> "$GITHUB_OUTPUT"
           fi
           echo "Karoo 3 version $name ($code)"
+          IFS=. read -r major minor patch <<< "$name"
+          expected=$((major * 10000 + minor * 100 + patch))
+          if [ "$code" != "$expected" ]; then
+            echo "::error::versionCode $code does not match versionName $name (expected $expected = major*10000 + minor*100 + patch)"
+            exit 1
+          fi
 
       - name: Signing key
         id: signing
@@ -110,3 +116,38 @@ jobs:
             Homewind for Hammerhead Karoo 3, version ${{ steps.version.outputs.name }} (code ${{ steps.version.outputs.code }}).
             Build: ${{ steps.signing.outputs.variant }}. Install the APK on the Karoo (Companion app sideload or `adb install -r`).
           files: karoo3/homewind-karoo3-v${{ steps.version.outputs.name }}.apk
+
+      # Update channel for the Karoo: AndroidManifest.xml points to
+      # releases/download/karoo3-latest/manifest.json (a fixed release, so a later
+      # Garmin release cannot become "latest" for the Karoo).
+      - name: Update manifest (karoo3-latest)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && steps.version.outputs.new == 'true' && steps.signing.outputs.variant == 'release'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NAME: ${{ steps.version.outputs.name }}
+          CODE: ${{ steps.version.outputs.code }}
+          TAG: ${{ steps.version.outputs.tag }}
+          REPO: ${{ github.repository }}
+        run: |
+          python3 - <<'PY'
+          import json, os
+          name, code, tag, repo = os.environ["NAME"], int(os.environ["CODE"]), os.environ["TAG"], os.environ["REPO"]
+          manifest = {
+              "label": "Homewind",
+              "packageName": "io.homewind.karoo",
+              "latestApkUrl": f"https://github.com/{repo}/releases/download/{tag}/homewind-karoo3-v{name}.apk",
+              "latestVersion": name,
+              "latestVersionCode": code,
+              "developer": "Martin Lihs",
+              "description": "Homewind fan control on the Karoo: fan speed, mode, sensors and graphs; plus, minus and mode on AXS buttons.",
+              "releaseNotes": f"https://github.com/{repo}/releases/tag/{tag}",
+              "tags": ["performance"],
+          }
+          json.dump(manifest, open("manifest.json", "w"), indent=2)
+          print(json.dumps(manifest, indent=2))
+          PY
+          gh release view karoo3-latest --repo "$REPO" > /dev/null 2>&1 || \
+            gh release create karoo3-latest --repo "$REPO" --title "Karoo 3 update channel" \
+              --notes "manifest.json for the Karoo's update check. Not a version; see the karoo3-v* releases." \
+              --prerelease --latest=false
+          gh release upload karoo3-latest manifest.json --repo "$REPO" --clobber
