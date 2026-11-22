@@ -60,22 +60,37 @@ object HomewindHttp {
         return client.newCall(request).execute().use { it.code to (it.body?.string() ?: "") }
     }
 
-    /** Setup screen: GET /api/v1/system/info. Returns (info, null) or (null, error text). Blocking. */
+    /**
+     * Setup screen: GET /api/v1/system/info. Returns (info, null) or (null, error text). Blocking.
+     * EHOSTUNREACH is retried up to 3 times after 1 s, as in the connection loop: the first
+     * attempt often fails until the Karoo has resolved Homewind's address (ARP).
+     */
     fun testConnection(host: String): Pair<String?, String?> {
+        var result = testOnce(host)
+        repeat(3) {
+            if (result.second == null || !result.third) return result.first to result.second
+            Thread.sleep(1_000)
+            result = testOnce(host)
+        }
+        return result.first to result.second
+    }
+
+    /** (info, error, host unreachable). */
+    private fun testOnce(host: String): Triple<String?, String?, Boolean> {
         val request = Request.Builder().url("http://$host/api/v1/system/info").get().build()
         return try {
             client.newCall(request).execute().use { r ->
-                if (r.code == 503) return null to NetError.BUSY.text
-                if (!r.isSuccessful) return null to "HTTP ${r.code} ${r.body?.string().orEmpty().take(60)}".trim()
+                if (r.code == 503) return Triple(null, NetError.BUSY.text, false)
+                if (!r.isSuccessful) return Triple(null, "HTTP ${r.code} ${r.body?.string().orEmpty().take(60)}".trim(), false)
                 val body = r.body?.string().orEmpty()
                 val name = Regex("^name=(.*)$", RegexOption.MULTILINE).find(body)?.groupValues?.get(1)
                 val version = Regex("^version=(.*)$", RegexOption.MULTILINE).find(body)?.groupValues?.get(1)
-                listOfNotNull(name, version).joinToString(" ").ifEmpty { "OK" } to null
+                Triple(listOfNotNull(name, version).joinToString(" ").ifEmpty { "OK" }, null, false)
             }
         } catch (e: Exception) {
             val error = logFailure(e, null, host, "setup-test")
             val errno = NetError.errno(chain(e))
-            null to error.text + if (errno != null && errno !in error.text) " ($errno)" else ""
+            Triple(null, error.text + if (errno != null && errno !in error.text) " ($errno)" else "", error == NetError.HOST_UNREACHABLE)
         }
     }
 
