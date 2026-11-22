@@ -1,10 +1,10 @@
 # Homewind for Karoo
 
-Karoo 3 extension for [Homewind](https://github.com/mLihs/Homewind). It shows Homewind's fan state in Karoo data fields and changes fan speed and fan mode from the Karoo, from SRAM AXS bonus buttons or Wireless Blips.
+Karoo 3 extension for [Homewind](https://homewind.io), the open-source fan controller for indoor cyclists: it turns the Xiaomi fan you already own into a training fan that follows your heart rate or power. The extension shows Homewind's fan state in Karoo data fields and changes fan speed and fan mode from the Karoo, from SRAM AXS bonus buttons or Wireless Blips.
 
-**Status: 1.0.0.** Uses Homewind **2.2**'s state API (`GET /api/v1/state`, no WebSocket slot); works with Homewind 2.0 and 2.1 over the WebSocket.
+**Status: 1.0.1.** Uses Homewind **2.2**'s state API (`GET /api/v1/state`, no WebSocket slot); works with Homewind 2.0 and 2.1 over the WebSocket.
 
-Karoo 3 only. Karoo and Homewind must be in the same Wi-Fi.
+Karoo 3 only. Karoo and Homewind must be in the same Wi-Fi. Install, requirements and FAQ for riders: [main README](../README.md#homewind-for-karoo-3).
 
 **Wi-Fi in the ride app:** the Karoo turns Wi-Fi off when you open the ride app. Turn it on there in the Quick Settings (swipe down); it then stays on while recording (tested 2026-11-21). The field shows *Wi-Fi off* until it is on and connects within seconds after.
 
@@ -81,7 +81,7 @@ Which buttons can carry Karoo actions: bonus buttons on SRAM RED AXS and Force A
 
 ## Setup
 
-1. Install the APK on the Karoo (see "Build and install").
+1. Install the APK on the Karoo: share the APK link from the [latest release](https://github.com/mLihs/Homewind-Bike-Computer/releases/latest) to the Hammerhead Companion app (or build it yourself, see "Build and install").
 2. Open **Homewind** in the Karoo's app list.
 3. **Search Homewind** finds it with mDNS (`homewind-xxxxxxxx`). If nothing is found (some routers block multicast), type the IP address. The Homewind web UI or the router shows it. A fixed IP for Homewind in the router helps.
 4. **Test and save**. On failure the screen shows the reason.
