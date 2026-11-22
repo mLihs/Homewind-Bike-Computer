@@ -1,8 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Homewind Touch icon "Icon Cadence" (Figma Homewind, node 1241:4993), tinted in code. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="24dp" android:height="24dp" android:viewportWidth="24" android:viewportHeight="24">
-    <!-- chainring ring with a crank arm -->
+    android:width="24dp" android:height="24dp" android:viewportWidth="32" android:viewportHeight="32">
     <path android:fillColor="#FFFFFFFF" android:fillType="evenOdd"
-        android:pathData="M12,6a6,6 0 1,0 0.01,0zM12,8a4,4 0 1,1 -0.01,0z" />
-    <path android:fillColor="#FFFFFFFF" android:pathData="M11,11h2v10h-2z" />
-    <path android:fillColor="#FFFFFFFF" android:pathData="M9,19h6v2h-6z" />
+        android:pathData="M11.1284 11.1284C13.0716 9.18516 15.8866 8.64638 18.3142 9.51013L22.9596 4.86479C24.1127 3.71176 25.9822 3.71172 27.1353 4.86479C28.2882 6.01787 28.2883 7.88744 27.1353 9.0405L22.4899 13.6858C23.3537 16.1135 22.8149 18.9285 20.8717 20.8717C18.9285 22.8149 16.1135 23.3536 13.6859 22.4899L9.04053 27.1352C7.88748 28.2883 6.01792 28.2882 4.86482 27.1352C3.71173 25.9822 3.71173 24.1126 4.86482 22.9595L9.51016 18.3142C8.64638 15.8865 9.18517 13.0716 11.1284 11.1284ZM7.14229 23.8736C6.59872 23.8736 6.15749 24.3149 6.15749 24.8584C6.15768 25.4017 6.59833 25.8424 7.14161 25.8426C7.68518 25.8426 8.12641 25.4013 8.12641 24.8578C8.12623 24.3144 7.68562 23.8738 7.14229 23.8736ZM15.3041 15.3041C14.9197 15.6884 14.9197 16.3116 15.3041 16.696C15.6885 17.0802 16.3117 17.0803 16.696 16.696L25.7434 7.6486C26.1276 7.26428 26.1275 6.64103 25.7434 6.25669C25.359 5.87237 24.7358 5.87244 24.3515 6.25669L15.3041 15.3041Z" />
 </vector>

@@ -1,4 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Homewind Touch icon "Icon Plus" (Figma Homewind, node 1241:4990), tinted in code. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="24dp" android:height="24dp" android:viewportWidth="24" android:viewportHeight="24">
-    <path android:fillColor="#FFFFFFFF" android:pathData="M10.5,3h3v7.5H21v3h-7.5V21h-3v-7.5H3v-3h7.5z" />
+    android:width="24dp" android:height="24dp" android:viewportWidth="32" android:viewportHeight="32">
+    <path android:fillColor="#FFFFFFFF"
+        android:pathData="M12 1H20V12H31V20H20V31H12V20H1V12H12V1Z" />
 </vector>

@@ -181,7 +181,7 @@ class StatusField(extension: String) : HomewindGraphicField(extension, "homewind
     @Composable
     override fun Content(config: ViewConfig, state: HomewindRuntime.FieldState) {
         if (!state.hw.hasFanControl) { Waiting(); return }
-        Card(R.drawable.ic_homewind, GREEN, "Fan · ${modeLabel(state.hw)}") {
+        Card(R.drawable.ic_fan, GREEN, "Fan · ${modeLabel(state.hw)}") {
             Row(modifier = GlanceModifier.fillMaxWidth(), verticalAlignment = Alignment.Bottom) {
                 Dots(state.hw)
                 Spacer(GlanceModifier.defaultWeight())
@@ -201,7 +201,7 @@ class FanColorField(extension: String) : HomewindGraphicField(extension, "homewi
         if (!state.hw.hasFanControl) { Waiting(); return }
         val argb = HeatScale.colorFor(state.hw.shownPct)
         val text = if (HeatScale.prefersDarkText(argb)) Color.Black else Color.White
-        Card(R.drawable.ic_homewind, text, "Fan · ${modeLabel(state.hw)}", background = Color(argb), titleColor = text) {
+        Card(R.drawable.ic_fan, text, "Fan · ${modeLabel(state.hw)}", background = Color(argb), titleColor = text) {
             Row(modifier = GlanceModifier.fillMaxWidth()) {
                 Spacer(GlanceModifier.defaultWeight())
                 Value("${state.hw.shownPct} %", text, config)
@@ -248,7 +248,7 @@ class ModeField(extension: String) : HomewindGraphicField(extension, "homewind-m
     override fun Content(config: ViewConfig, state: HomewindRuntime.FieldState) {
         if (!state.hw.hasFanControl) { Waiting(); return }
         Card(
-            R.drawable.ic_homewind, GREEN, "Mode",
+            R.drawable.ic_fan, GREEN, "Mode",
             background = CONTROL,
             modifier = GlanceModifier.clickable(actionRunCallback<ModeAction>()),
         ) {
@@ -291,7 +291,7 @@ class AppsField(extension: String) : HomewindGraphicField(extension, "homewind-a
     override fun Content(config: ViewConfig, state: HomewindRuntime.FieldState) {
         val app = Display.appBadge(state.hw)
         val trainer = Display.trainerBadge(state.hw)
-        Card(R.drawable.ic_homewind, GREEN, "Apps") {
+        Card(R.drawable.ic_fan, GREEN, "Apps") {
             val detail = buildList {
                 state.hw.apps?.let { add(if (it == 1) "1 app" else "$it apps") }
                 state.hw.trainer?.takeIf { it.mirror }?.name?.ifBlank { null }?.let { add(it) }
@@ -407,7 +407,7 @@ class GraphField(extension: String, typeId: String, private val style: GraphRend
         val hr = Display.heartRate(hw)
         Column(modifier = GlanceModifier.fillMaxSize().padding(horizontal = 8.dp, vertical = 4.dp)) {
             Row(modifier = GlanceModifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                Icon(R.drawable.ic_homewind, GREEN)
+                Icon(R.drawable.ic_fan, GREEN)
                 Spacer(GlanceModifier.width(6.dp))
                 Text(
                     if (hw.hasFanControl) "${hw.shownPct} %" else "–",

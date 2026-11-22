@@ -1,4 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Homewind Touch icon "Icon Minus" (Figma Homewind, node 1241:4989), tinted in code. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="24dp" android:height="24dp" android:viewportWidth="24" android:viewportHeight="24">
-    <path android:fillColor="#FFFFFFFF" android:pathData="M3,10.5h18v3H3z" />
+    android:width="24dp" android:height="24dp" android:viewportWidth="32" android:viewportHeight="32">
+    <path android:fillColor="#FFFFFFFF"
+        android:pathData="M1 12H31V20H1V12Z" />
 </vector>
