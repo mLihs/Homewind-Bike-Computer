@@ -22,6 +22,10 @@
     <DataType typeId="homewind-power" displayName="@string/field_power" description="@string/field_power_description" graphical="true" icon="@drawable/ic_bolt" />
     <DataType typeId="homewind-cadence" displayName="@string/field_cadence" description="@string/field_cadence_description" graphical="true" icon="@drawable/ic_crank" />
 
+    <!-- Graphs -->
+    <DataType typeId="homewind-graph" displayName="@string/field_graph" description="@string/field_graph_description" graphical="true" icon="@drawable/ic_homewind" />
+    <DataType typeId="homewind-graph-zones" displayName="@string/field_graph_zones" description="@string/field_graph_zones_description" graphical="true" icon="@drawable/ic_homewind" />
+
     <BonusAction actionId="plus" displayName="@string/action_plus" />
     <BonusAction actionId="minus" displayName="@string/action_minus" />
     <BonusAction actionId="mode" displayName="@string/action_mode" />

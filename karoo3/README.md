@@ -10,37 +10,48 @@ Karoo 3 only. Karoo and Homewind must be in the same Wi-Fi.
 
 ## Data fields
 
-Find them in the profile editor: tap a field → filter **Extensions** → Homewind.
+Find them in the profile editor: tap a field → filter **Extensions** → Homewind. Look as the Karoo's own fields (icon top left, title in capitals top right, value bottom right), colours from the Homewind Touch.
 
-**Fans**
+**Fan**
 
-| Field | Size | Content |
-| --- | --- | --- |
-| **Homewind fan control** | wide | Minus, mode (tap to switch), fan speed in %, fan dots, plus |
-| **Homewind fans** | small | Mode in effect, fan speed in %, fan dots |
-| **Homewind fan colour** | small | Fan speed in %, tile coloured in 10 % steps: 0 % blue → cyan → green → yellow → 100 % red; text switches to dark on light colours |
-| **Homewind − +** | small | Minus and plus keys |
-| **Homewind mode** | small | Mode; tap switches Pure → Smart → Hybrid |
-| **Homewind fan %** | small | Fan speed as a plain number field |
+| Field | Content |
+| --- | --- |
+| **Homewind fan · numeric** | FAN · mode, fan dots, fan speed in % (green while running) |
+| **Homewind fan · zone colour** | Whole tile in 10 % step colours: 0 % blue → cyan → green → yellow → 100 % red; dark text on light colours |
+| **Homewind fan · control** | Wide: minus, mode (tap to switch), fan speed, fan dots, plus |
+| **Homewind fan · minus plus** | The two keys |
+| **Homewind fan · mode** | MODE; tap switches Pure → Smart → Hybrid |
+| **Homewind fan · plain number** | Fan speed as a plain Karoo number field |
 
-Fan dots, same colours as the Homewind Touch: green = fan runs in the control, white = connected but off, orange = not reachable or in error, dark grey = no fan in this slot.
+Fan dots, Touch colours: green = fan runs in the control, white = connected but off, orange = not reachable or in error, dark grey = no fan in this slot.
+
+**Graphs** (last 10 minutes, newest on the right; one sample every 2 s while the Karoo is connected)
+
+| Field | Content |
+| --- | --- |
+| **Homewind graph · fan and HR** | Fan speed as green area, heart rate as pink line |
+| **Homewind graph · zones** | Fan speed as bars in the 10 % step colours, heart rate as white line |
+
+Both draw Homewind's HR range (HR min/max, where the fan ramps from minimum to maximum) as faint dashed lines; the header shows the current fan speed and heart rate. The history lives in memory only and starts when a Homewind field is on screen or a ride is recording.
 
 **Apps and trainer**
 
 | Field | Content |
 | --- | --- |
-| **Homewind apps** | Badges **APP** and **Trainer**, colours as on the Touch: green = connected/ready, orange = was connected, now lost, grey = not yet. The Trainer badge is hidden without a mirrored trainer. Below: number of apps and trainer name |
+| **Homewind apps** | Badges **APP** and **Trainer**, Touch colours: green = connected/ready, orange = was connected, now lost, grey = not yet. The Trainer badge is hidden without a mirrored trainer |
 
-**Sensors** (what Homewind relays, with Touch colours: HR pink, power violet, cadence blue; darker when disconnected)
+**Sensors** (what Homewind relays; value in the sensor colour: HR pink, power violet, cadence blue; grey when disconnected)
 
 | Field | Content |
 | --- | --- |
-| **Homewind sensors** | All rows: HR, power, cadence with icon, source name, value. Rows that are not set up are hidden |
-| **Homewind HR** / **power** / **cadence** | One row each, for its own cell |
+| **Homewind sensors** | One line per set-up sensor: icon, source name, value |
+| **Homewind sensor · HR / power / cadence** | One sensor as a card |
 
 Power source: power meter while it delivers, otherwise the trainer. Cadence source: cadence sensor, else power meter (once it sent cadence), else trainer (Touch concept rules).
 
 Field texts when there is no data: *Set up* (no address), *Wi-Fi off* (Karoo Wi-Fi off), *Offline* (no answer; the reason is shown below it), *Web UI full* (two browsers already connected, see "Limits").
+
+**Rule for field texts:** no `%` in display names or descriptions followed by more text. The Karoo sideload installer failed with "Unknown error" on 0.2.1, the first version with such a text.
 
 ## Bonus actions
 

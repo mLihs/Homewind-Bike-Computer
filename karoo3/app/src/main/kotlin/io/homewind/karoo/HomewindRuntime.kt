@@ -54,7 +54,16 @@ object HomewindRuntime {
     private const val TAG = "HomewindRuntime"
 
     /** [error]: why the last connection attempt ended (shown under "Offline"). */
-    data class FieldState(val link: Link, val hw: HomewindState, val error: String? = null)
+    data class FieldState(
+        val link: Link,
+        val hw: HomewindState,
+        val error: String? = null,
+        /** Bumped on every new graph sample, so graph fields redraw. */
+        val historyVersion: Int = 0,
+    )
+
+    /** Fan speed and heart rate over the last 10 minutes, for the graph fields. */
+    val history = io.homewind.karoo.core.History()
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val _field = MutableStateFlow(FieldState(Link.NOT_CONFIGURED, HomewindState()))
@@ -106,7 +115,7 @@ object HomewindRuntime {
         startWifiWatch(appContext)
         synchronized(usersLock) {
             users += key
-            if (loop?.isActive != true) loop = scope.launch { connectLoop() }
+            if (loop?.isActive != true) loop = scope.launch { launch { sampleLoop() }; connectLoop() }
         }
     }
 
@@ -125,7 +134,7 @@ object HomewindRuntime {
         _field.value = FieldState(Link.CONNECTING, HomewindState())
         synchronized(usersLock) {
             loop?.cancel()
-            loop = if (users.isNotEmpty()) scope.launch { connectLoop() } else null
+            loop = if (users.isNotEmpty()) scope.launch { launch { sampleLoop() }; connectLoop() } else null
         }
     }
 
@@ -184,7 +193,7 @@ object HomewindRuntime {
             override fun onOpen(webSocket: WebSocket, response: Response) {
                 opened = true
                 // New connection: fan list, sensors and trainer have to arrive again (staged connect or refresh).
-                _field.update { FieldState(Link.CONNECTED, it.hw.copy(fansKnown = false, sensors = null, clientId = null), null) }
+                _field.update { it.copy(link = Link.CONNECTED, hw = it.hw.copy(fansKnown = false, sensors = null, clientId = null), error = null) }
             }
 
             override fun onMessage(webSocket: WebSocket, bytes: ByteString) {
@@ -223,6 +232,24 @@ object HomewindRuntime {
     }
 
     private fun setLink(link: Link) = _field.update { it.copy(link = link) }
+
+    /** One graph sample every 2 s while connected (runs as a child of the connect loop). */
+    private suspend fun sampleLoop() {
+        while (currentCoroutineContext().isActive) {
+            delay(io.homewind.karoo.core.History.INTERVAL_MS)
+            val f = _field.value
+            if (f.link != Link.CONNECTED) continue
+            val hw = f.hw
+            val hrConnected = hw.sensors?.any { it.type == io.homewind.karoo.core.SensorType.HR && it.connected } ?: (hw.heartRate != null)
+            history.add(
+                io.homewind.karoo.core.Sample(
+                    fanPct = if (hw.hasFanControl) hw.shownPct else null,
+                    hr = if (hrConnected) hw.heartRate?.takeIf { it > 0 } else null,
+                ),
+            )
+            _field.update { it.copy(historyVersion = it.historyVersion + 1) }
+        }
+    }
 
     private fun setError(error: String) = _field.update { it.copy(error = error) }
 

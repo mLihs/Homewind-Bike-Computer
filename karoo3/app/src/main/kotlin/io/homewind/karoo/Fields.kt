@@ -13,6 +13,7 @@ import androidx.glance.ColorFilter
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
 import androidx.glance.Image
+import androidx.glance.LocalContext
 import androidx.glance.ImageProvider
 import androidx.glance.action.Action
 import androidx.glance.action.ActionParameters
@@ -52,6 +53,7 @@ import io.homewind.karoo.core.Badge
 import io.homewind.karoo.core.Display
 import io.homewind.karoo.core.FanDot
 import io.homewind.karoo.core.HeatScale
+import io.homewind.karoo.core.History
 import io.homewind.karoo.core.HomewindState
 import io.homewind.karoo.core.HrStep
 import io.homewind.karoo.core.Link
@@ -174,22 +176,24 @@ abstract class HomewindGraphicField(extension: String, typeId: String) : DataTyp
 
 // ---- fan fields ------------------------------------------------------------------------------
 
-/** "Homewind fans" (small): mode in effect, fan speed in %, four fan dots. Display only. */
+/** "Homewind fan · numeric": Karoo-style card: FAN · mode, fan dots, fan speed in % (green while running). */
 class StatusField(extension: String) : HomewindGraphicField(extension, "homewind") {
     @Composable
     override fun Content(config: ViewConfig, state: HomewindRuntime.FieldState) {
         if (!state.hw.hasFanControl) { Waiting(); return }
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(modeLabel(state.hw), style = small(), maxLines = 1)
-            FanPercent(state.hw, minOf(config.textSize, 34))
-            Dots(state.hw)
+        Card(R.drawable.ic_homewind, GREEN, "Fan · ${modeLabel(state.hw)}") {
+            Row(modifier = GlanceModifier.fillMaxWidth(), verticalAlignment = Alignment.Bottom) {
+                Dots(state.hw)
+                Spacer(GlanceModifier.defaultWeight())
+                Value("${state.hw.shownPct} %", if (state.hw.shownPct > 0) GREEN else Color.White, config)
+            }
         }
     }
 }
 
 /**
- * "Homewind fan colour" (small): fan speed in %, the whole tile coloured in 10 % steps
- * from blue (0 %) to red (100 %), see [HeatScale]. Mode in effect above the number.
+ * "Homewind fan · zone colour": the whole tile in the 10 % step colour from blue (0 %)
+ * to red (100 %), see [HeatScale]; dark text on light colours.
  */
 class FanColorField(extension: String) : HomewindGraphicField(extension, "homewind-fan-color") {
     @Composable
@@ -197,18 +201,10 @@ class FanColorField(extension: String) : HomewindGraphicField(extension, "homewi
         if (!state.hw.hasFanControl) { Waiting(); return }
         val argb = HeatScale.colorFor(state.hw.shownPct)
         val text = if (HeatScale.prefersDarkText(argb)) Color.Black else Color.White
-        Rounded(Color(argb), GlanceModifier.fillMaxSize()) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(
-                    modeLabel(state.hw),
-                    style = TextStyle(color = ColorProvider(text.copy(alpha = 0.75f)), fontSize = 12.sp, textAlign = TextAlign.Center),
-                    maxLines = 1,
-                )
-                Text(
-                    "${state.hw.shownPct} %",
-                    style = TextStyle(color = ColorProvider(text), fontSize = minOf(config.textSize, 34).sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center),
-                    maxLines = 1,
-                )
+        Card(R.drawable.ic_homewind, text, "Fan · ${modeLabel(state.hw)}", background = Color(argb), titleColor = text) {
+            Row(modifier = GlanceModifier.fillMaxWidth()) {
+                Spacer(GlanceModifier.defaultWeight())
+                Value("${state.hw.shownPct} %", text, config)
             }
         }
     }
@@ -246,15 +242,19 @@ class KeysField(extension: String) : HomewindGraphicField(extension, "homewind-k
     }
 }
 
-/** "Homewind mode" (small): shows the mode, a tap switches Pure → Smart → Hybrid. */
+/** "Homewind mode": MODE card, tap switches Pure → Smart → Hybrid. */
 class ModeField(extension: String) : HomewindGraphicField(extension, "homewind-mode") {
     @Composable
     override fun Content(config: ViewConfig, state: HomewindRuntime.FieldState) {
         if (!state.hw.hasFanControl) { Waiting(); return }
-        Rounded(CONTROL, GlanceModifier.fillMaxSize().clickable(actionRunCallback<ModeAction>())) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text("Mode", style = small(), maxLines = 1)
-                Text(modeLabel(state.hw), style = bold(minOf(config.textSize, 26)), maxLines = 1)
+        Card(
+            R.drawable.ic_homewind, GREEN, "Mode",
+            background = CONTROL,
+            modifier = GlanceModifier.clickable(actionRunCallback<ModeAction>()),
+        ) {
+            Row(modifier = GlanceModifier.fillMaxWidth()) {
+                Spacer(GlanceModifier.defaultWeight())
+                Value(modeLabel(state.hw).uppercase(), Color.White, config, max = 28)
             }
         }
     }
@@ -285,35 +285,36 @@ class FanSpeedField(extension: String, private val context: Context) : DataTypeI
 
 // ---- trainer / app ---------------------------------------------------------------------------
 
-/** "Homewind apps": badges APP and Trainer with the Touch colours. */
+/** "Homewind apps": APPS card with the badges APP and Trainer (Touch colours). */
 class AppsField(extension: String) : HomewindGraphicField(extension, "homewind-apps") {
     @Composable
     override fun Content(config: ViewConfig, state: HomewindRuntime.FieldState) {
         val app = Display.appBadge(state.hw)
         val trainer = Display.trainerBadge(state.hw)
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
+        Card(R.drawable.ic_homewind, GREEN, "Apps") {
+            val detail = buildList {
+                state.hw.apps?.let { add(if (it == 1) "1 app" else "$it apps") }
+                state.hw.trainer?.takeIf { it.mirror }?.name?.ifBlank { null }?.let { add(it) }
+            }.joinToString(" · ")
+            Text(detail, style = small(TextAlign.End), maxLines = 1, modifier = GlanceModifier.fillMaxWidth())
+            Row(modifier = GlanceModifier.fillMaxWidth()) {
+                Spacer(GlanceModifier.defaultWeight())
                 BadgeChip("APP", app)
                 if (trainer != Badge.HIDDEN) {
                     Spacer(GlanceModifier.width(6.dp))
                     BadgeChip("Trainer", trainer)
                 }
             }
-            val detail = buildList {
-                state.hw.apps?.let { add(if (it == 1) "1 app" else "$it apps") }
-                state.hw.trainer?.takeIf { it.mirror }?.name?.ifBlank { null }?.let { add(it) }
-            }.joinToString(" · ")
-            if (detail.isNotEmpty()) Text(detail, style = small(), maxLines = 1)
         }
     }
 }
 
 // ---- sensors ---------------------------------------------------------------------------------
 
-private enum class Kind(val icon: Int, val on: Color, val off: Color, val unit: String) {
-    HR(R.drawable.ic_heart, HR_ON, HR_OFF, ""),
-    POWER(R.drawable.ic_bolt, POWER_ON, POWER_OFF, " W"),
-    CADENCE(R.drawable.ic_crank, CADENCE_ON, CADENCE_OFF, " rpm"),
+private enum class Kind(val icon: Int, val color: Color, val title: String, val unit: String) {
+    HR(R.drawable.ic_heart, HR_ON, "HR", ""),
+    POWER(R.drawable.ic_bolt, POWER_ON, "Power", " W"),
+    CADENCE(R.drawable.ic_crank, CADENCE_ON, "Cadence", " rpm"),
 }
 
 private fun row(kind: Kind, hw: HomewindState): SensorRow = when (kind) {
@@ -322,28 +323,49 @@ private fun row(kind: Kind, hw: HomewindState): SensorRow = when (kind) {
     Kind.CADENCE -> Display.cadence(hw)
 }
 
-/** "Homewind sensors": heart rate, power and cadence rows; unconfigured rows are hidden. */
+/** "Homewind sensors": one line per set-up sensor: icon, source name, value in the sensor colour. */
 class SensorsField(extension: String) : HomewindGraphicField(extension, "homewind-sensors") {
     @Composable
     override fun Content(config: ViewConfig, state: HomewindRuntime.FieldState) {
         if (state.hw.sensors == null) { Waiting(); return }
         val rows = Kind.entries.map { it to row(it, state.hw) }.filter { it.second.status != RowStatus.NOT_CONFIGURED }
         if (rows.isEmpty()) { Message("No sensors"); return }
-        Column(modifier = GlanceModifier.fillMaxSize()) {
+        Column(modifier = GlanceModifier.fillMaxSize().padding(horizontal = 8.dp, vertical = 2.dp)) {
             rows.forEach { (kind, r) ->
-                SensorTile(kind, r, minOf(config.textSize, 24), GlanceModifier.fillMaxWidth().defaultWeight())
+                Row(
+                    modifier = GlanceModifier.fillMaxWidth().defaultWeight(),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(kind.icon, if (r.status == RowStatus.ACTIVE) kind.color else MUTED)
+                    Spacer(GlanceModifier.width(6.dp))
+                    Text(r.name ?: "", style = small(TextAlign.Start), maxLines = 1, modifier = GlanceModifier.defaultWeight())
+                    Text(
+                        sensorValue(kind, r),
+                        style = bold(if (r.status == RowStatus.ACTIVE) minOf(config.textSize, 24) else 14, TextAlign.End)
+                            .copy(color = ColorProvider(if (r.status == RowStatus.ACTIVE) kind.color else MUTED)),
+                        maxLines = 1,
+                    )
+                }
             }
         }
     }
 }
 
-/** One sensor alone: "Homewind HR", "Homewind power", "Homewind cadence". */
+/** One sensor as a Karoo-style card: "Homewind HR", "Homewind power", "Homewind cadence". */
 private class SingleSensorField(extension: String, typeId: String, private val kind: Kind) :
     HomewindGraphicField(extension, typeId) {
     @Composable
     override fun Content(config: ViewConfig, state: HomewindRuntime.FieldState) {
         if (state.hw.sensors == null) { Waiting(); return }
-        SensorTile(kind, row(kind, state.hw), minOf(config.textSize, 34), GlanceModifier.fillMaxSize())
+        val r = row(kind, state.hw)
+        val active = r.status == RowStatus.ACTIVE
+        Card(kind.icon, if (active) kind.color else MUTED, kind.title) {
+            Row(modifier = GlanceModifier.fillMaxWidth(), verticalAlignment = Alignment.Bottom) {
+                Text(r.name ?: "", style = small(TextAlign.Start), maxLines = 1, modifier = GlanceModifier.defaultWeight())
+                if (active) Value(sensorValue(kind, r), kind.color, config)
+                else Text(sensorValue(kind, r), style = bold(16, TextAlign.End).copy(color = ColorProvider(MUTED)), maxLines = 1)
+            }
+        }
     }
 }
 
@@ -351,43 +373,116 @@ fun hrField(extension: String): DataTypeImpl = SingleSensorField(extension, "hom
 fun powerField(extension: String): DataTypeImpl = SingleSensorField(extension, "homewind-power", Kind.POWER)
 fun cadenceField(extension: String): DataTypeImpl = SingleSensorField(extension, "homewind-cadence", Kind.CADENCE)
 
-@Composable
-private fun SensorTile(kind: Kind, r: SensorRow, valueSize: Int, modifier: GlanceModifier) {
-    val active = r.status == RowStatus.ACTIVE
-    val bg = when (r.status) {
-        RowStatus.ACTIVE -> kind.on
-        RowStatus.DISCONNECTED -> kind.off
-        RowStatus.NOT_CONFIGURED -> CONTROL
-    }
-    Rounded(bg, modifier.padding(1.dp)) {
-        Row(
-            modifier = GlanceModifier.fillMaxSize().padding(horizontal = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Image(
-                provider = ImageProvider(kind.icon),
-                contentDescription = null,
-                modifier = GlanceModifier.size(20.dp),
-                colorFilter = ColorFilter.tint(ColorProvider(if (active) Color.White else MUTED)),
-            )
-            Spacer(GlanceModifier.width(6.dp))
-            Column(modifier = GlanceModifier.defaultWeight()) {
-                Text(r.name ?: "", style = small(TextAlign.Start), maxLines = 1)
+private fun sensorValue(kind: Kind, r: SensorRow): String = when (r.status) {
+    RowStatus.ACTIVE -> "${r.value}${kind.unit}"
+    RowStatus.DISCONNECTED -> "Disconnected"
+    RowStatus.NOT_CONFIGURED -> "Not set up"
+}
+
+// ---- graphs ----------------------------------------------------------------------------------
+
+/**
+ * "Homewind graph" / "Homewind graph · zones": fan speed and heart rate over the last
+ * 10 minutes, drawn by [GraphRenderer]. Header shows the current values.
+ */
+class GraphField(extension: String, typeId: String, private val style: GraphRenderer.Style) :
+    HomewindGraphicField(extension, typeId) {
+    @Composable
+    override fun Content(config: ViewConfig, state: HomewindRuntime.FieldState) {
+        val context = LocalContext.current
+        val density = context.resources.displayMetrics.density
+        val hw = state.hw
+        val headerPx = (30 * density).toInt()
+        val samples = HomewindRuntime.history.snapshot()
+        val bitmap = GraphRenderer.render(
+            width = config.viewSize.first - (16 * density).toInt(),
+            height = config.viewSize.second - headerPx - (8 * density).toInt(),
+            density = density,
+            samples = samples,
+            capacity = 300,
+            hrMin = hw.hrMin,
+            hrMax = hw.hrMax,
+            style = style,
+        )
+        val hr = Display.heartRate(hw)
+        Column(modifier = GlanceModifier.fillMaxSize().padding(horizontal = 8.dp, vertical = 4.dp)) {
+            Row(modifier = GlanceModifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Icon(R.drawable.ic_homewind, GREEN)
+                Spacer(GlanceModifier.width(6.dp))
                 Text(
-                    text = when (r.status) {
-                        RowStatus.ACTIVE -> "${r.value}${kind.unit}"
-                        RowStatus.DISCONNECTED -> "Disconnected"
-                        RowStatus.NOT_CONFIGURED -> "Not set up"
-                    },
-                    style = bold(if (active) valueSize else minOf(valueSize, 16), TextAlign.Start),
+                    if (hw.hasFanControl) "${hw.shownPct} %" else "–",
+                    style = bold(15, TextAlign.Start).copy(color = ColorProvider(if (style == GraphRenderer.Style.ZONES) Color(HeatScale.colorFor(hw.shownPct)) else GREEN)),
                     maxLines = 1,
                 )
+                Spacer(GlanceModifier.width(8.dp))
+                Icon(R.drawable.ic_heart, if (style == GraphRenderer.Style.ZONES) Color.White else HR_ON)
+                Spacer(GlanceModifier.width(4.dp))
+                Text(
+                    if (hr.status == RowStatus.ACTIVE) "${hr.value}" else "–",
+                    style = bold(15, TextAlign.Start).copy(color = ColorProvider(if (style == GraphRenderer.Style.ZONES) Color.White else HR_ON)),
+                    maxLines = 1,
+                )
+                Spacer(GlanceModifier.defaultWeight())
+                Text("FAN · HR", style = bold(15, TextAlign.End), maxLines = 1)
             }
+            Image(
+                provider = ImageProvider(bitmap),
+                contentDescription = null,
+                modifier = GlanceModifier.fillMaxWidth().defaultWeight(),
+                contentScale = androidx.glance.layout.ContentScale.FillBounds,
+            )
         }
     }
 }
 
 // ---- building blocks -------------------------------------------------------------------------
+
+/**
+ * Karoo-style card: header with a small icon on the left and the title in capitals on
+ * the right, content (usually the value, right-aligned) at the bottom.
+ */
+@Composable
+private fun Card(
+    icon: Int,
+    iconColor: Color,
+    title: String,
+    background: Color = BACKGROUND,
+    titleColor: Color = Color.White,
+    modifier: GlanceModifier = GlanceModifier,
+    content: @Composable () -> Unit,
+) {
+    Rounded(background, modifier.fillMaxSize()) {
+        Column(modifier = GlanceModifier.fillMaxSize().padding(horizontal = 8.dp, vertical = 4.dp)) {
+            Row(modifier = GlanceModifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Icon(icon, iconColor)
+                Spacer(GlanceModifier.defaultWeight())
+                Text(title.uppercase(), style = bold(15, TextAlign.End).copy(color = ColorProvider(titleColor)), maxLines = 1)
+            }
+            Spacer(GlanceModifier.defaultWeight())
+            content()
+        }
+    }
+}
+
+@Composable
+private fun Icon(icon: Int, color: Color) {
+    Image(
+        provider = ImageProvider(icon),
+        contentDescription = null,
+        modifier = GlanceModifier.size(18.dp),
+        colorFilter = ColorFilter.tint(ColorProvider(color)),
+    )
+}
+
+/** The big value, right-aligned like the Karoo's own fields. */
+@Composable
+private fun Value(text: String, color: Color, config: ViewConfig, max: Int = 40) {
+    Text(
+        text,
+        style = TextStyle(color = ColorProvider(color), fontSize = minOf(config.textSize, max).sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.End),
+        maxLines = 1,
+    )
+}
 
 @Composable
 private fun LinkBlock(state: HomewindRuntime.FieldState) {

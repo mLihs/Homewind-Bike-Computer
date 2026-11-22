@@ -32,6 +32,8 @@ class HomewindExtension : KarooExtension(EXTENSION_ID, BuildConfig.VERSION_NAME)
             hrField(EXTENSION_ID),
             powerField(EXTENSION_ID),
             cadenceField(EXTENSION_ID),
+            GraphField(EXTENSION_ID, "homewind-graph", GraphRenderer.Style.TWO_COLOR),
+            GraphField(EXTENSION_ID, "homewind-graph-zones", GraphRenderer.Style.ZONES),
         )
     }
 

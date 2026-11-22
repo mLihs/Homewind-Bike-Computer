@@ -1,27 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- No percent signs in field texts: the Karoo sideload installer failed on them (0.2.1). -->
 <resources>
     <string name="app_name">Homewind</string>
-    <string name="field_status">Homewind fans</string>
-    <string name="field_status_description">Fan mode, fan speed and fan states</string>
-    <string name="field_fan_color">Homewind fan colour</string>
+    <string name="field_status">Homewind fan · numeric</string>
+    <string name="field_status_description">Fan speed, mode and fan states</string>
+    <string name="field_fan_color">Homewind fan · zone colour</string>
     <string name="field_fan_color_description">Fan speed, tile coloured from blue (zero) to red (full)</string>
-    <string name="field_control">Homewind fan control</string>
+    <string name="field_control">Homewind fan · control</string>
     <string name="field_control_description">Wide: minus, mode (tap to switch), fan speed, fan states, plus</string>
-    <string name="field_keys">Homewind − +</string>
+    <string name="field_keys">Homewind fan · minus plus</string>
     <string name="field_keys_description">Minus and plus keys for the fan speed</string>
-    <string name="field_mode">Homewind mode</string>
+    <string name="field_mode">Homewind fan · mode</string>
     <string name="field_mode_description">Fan mode; tap to switch Pure, Smart, Hybrid</string>
-    <string name="field_fan">Homewind fan %</string>
-    <string name="field_fan_description">Fan speed in percent</string>
+    <string name="field_fan">Homewind fan · plain number</string>
+    <string name="field_fan_description">Fan speed as a plain Karoo number field</string>
+    <string name="field_graph">Homewind graph · fan and HR</string>
+    <string name="field_graph_description">Fan speed (green) and heart rate (pink) over the last 10 minutes</string>
+    <string name="field_graph_zones">Homewind graph · zones</string>
+    <string name="field_graph_zones_description">Fan speed in step colours (blue to red) and heart rate (white) over the last 10 minutes</string>
     <string name="field_apps">Homewind apps</string>
     <string name="field_apps_description">App and trainer connected to Homewind</string>
     <string name="field_sensors">Homewind sensors</string>
     <string name="field_sensors_description">Heart rate, power and cadence through Homewind</string>
-    <string name="field_hr">Homewind HR</string>
+    <string name="field_hr">Homewind sensor · HR</string>
     <string name="field_hr_description">Heart rate sensor through Homewind</string>
-    <string name="field_power">Homewind power</string>
+    <string name="field_power">Homewind sensor · power</string>
     <string name="field_power_description">Power through Homewind (power meter or trainer)</string>
-    <string name="field_cadence">Homewind cadence</string>
+    <string name="field_cadence">Homewind sensor · cadence</string>
     <string name="field_cadence_description">Cadence through Homewind (sensor, power meter or trainer)</string>
     <string name="action_plus">Homewind +</string>
     <string name="action_minus">Homewind −</string>
