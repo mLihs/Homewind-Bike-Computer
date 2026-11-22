@@ -22,6 +22,7 @@ import androidx.glance.appwidget.ExperimentalGlanceRemoteViewsApi
 import androidx.glance.appwidget.GlanceRemoteViews
 import androidx.glance.appwidget.action.ActionCallback
 import androidx.glance.appwidget.action.actionRunCallback
+import androidx.glance.appwidget.action.actionStartActivity
 import androidx.glance.appwidget.cornerRadius
 import androidx.glance.background
 import androidx.glance.layout.Alignment
@@ -50,6 +51,8 @@ import io.hammerhead.karooext.models.StreamState
 import io.hammerhead.karooext.models.UpdateGraphicConfig
 import io.hammerhead.karooext.models.ViewConfig
 import io.homewind.karoo.core.Badge
+import io.homewind.karoo.core.Demo
+import io.homewind.karoo.core.FanMode
 import io.homewind.karoo.core.Display
 import io.homewind.karoo.core.FanDot
 import io.homewind.karoo.core.HeatScale
@@ -141,7 +144,18 @@ abstract class HomewindGraphicField(extension: String, typeId: String) : DataTyp
             }
         }
 
-        val job = CoroutineScope(Dispatchers.Main).launch {
+        val job = if (config.preview) {
+            // Field picker preview: animated example data like the Karoo's own fields, no connection.
+            CoroutineScope(Dispatchers.Main).launch {
+                var tick = 0
+                while (true) {
+                    val demo = HomewindRuntime.FieldState(Link.CONNECTED, Demo.state(tick), demoSamples = Demo.samples(tick))
+                    if (!render(context, config, emitter, demo)) { tearDown(); break }
+                    tick++
+                    delay(1_100)
+                }
+            }
+        } else CoroutineScope(Dispatchers.Main).launch {
             HomewindRuntime.field.collectLatest { state ->
                 if (!render(context, config, emitter, state)) { tearDown(); return@collectLatest }
                 delay(1_100)
@@ -222,9 +236,13 @@ class ControlField(extension: String) : HomewindGraphicField(extension, "homewin
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
+                val density = LocalContext.current.resources.displayMetrics.density
+                val heightDp = config.viewSize.second / density
                 ModeButton(state.hw, GlanceModifier.fillMaxWidth())
                 FanPercent(state.hw, minOf(config.textSize, 30))
-                Dots(state.hw)
+                // Low cells: the HR range matters more while adjusting than the dots.
+                if (heightDp >= 120) Dots(state.hw)
+                rangeLine(state.hw)?.let { Text(it, style = small(), maxLines = 1) }
             }
             Key(R.drawable.ic_plus, actionRunCallback<PlusAction>(), GlanceModifier.width(56.dp).fillMaxHeight())
         }
@@ -291,7 +309,7 @@ class AppsField(extension: String) : HomewindGraphicField(extension, "homewind-a
     override fun Content(config: ViewConfig, state: HomewindRuntime.FieldState) {
         val app = Display.appBadge(state.hw)
         val trainer = Display.trainerBadge(state.hw)
-        Card(R.drawable.ic_fan, GREEN, "Apps") {
+        Card(R.drawable.ic_fan, GREEN, "Apps", modifier = GlanceModifier.clickable(actionStartActivity<QrActivity>())) {
             val detail = buildList {
                 state.hw.apps?.let { add(if (it == 1) "1 app" else "$it apps") }
                 state.hw.trainer?.takeIf { it.mirror }?.name?.ifBlank { null }?.let { add(it) }
@@ -393,7 +411,7 @@ class GraphField(extension: String, typeId: String, private val style: GraphRend
         val density = context.resources.displayMetrics.density
         val hw = state.hw
         val headerPx = (30 * density).toInt()
-        val samples = HomewindRuntime.history.snapshot()
+        val samples = state.demoSamples ?: HomewindRuntime.history.snapshot()
         val bitmap = GraphRenderer.render(
             width = config.viewSize.first - (16 * density).toInt(),
             height = config.viewSize.second - headerPx - (8 * density).toInt(),
@@ -593,6 +611,14 @@ private fun Rounded(
         modifier = modifier.cornerRadius(radius).background(ColorProvider(color)),
         contentAlignment = Alignment.Center,
     ) { content() }
+}
+
+/** "HR 80–160 · FTP 250" for the control field; FTP only in Hybrid, where it acts on the fan. */
+private fun rangeLine(hw: HomewindState): String? {
+    val min = hw.hrMin ?: return null
+    val max = hw.hrMax ?: return null
+    val ftp = hw.ftpW?.takeIf { it > 0 && hw.mode == FanMode.HYBRID }
+    return "HR $min–$max" + (ftp?.let { " · FTP $it" } ?: "")
 }
 
 private fun modeLabel(hw: HomewindState): String = (hw.effective ?: hw.mode)?.label ?: ""

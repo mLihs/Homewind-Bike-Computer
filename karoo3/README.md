@@ -10,7 +10,7 @@ Karoo 3 only. Karoo and Homewind must be in the same Wi-Fi.
 
 ## Data fields
 
-Find them in the profile editor: tap a field → filter **Extensions** → Homewind. Look as the Karoo's own fields (icon top left, title in capitals top right, value bottom right), colours from the Homewind Touch.
+Find them in the profile editor: tap a field → filter **Extensions** → Homewind. The previews in the field picker show animated example data (a ride building up and easing off), without connecting to Homewind. Look as the Karoo's own fields (icon top left, title in capitals top right, value bottom right), colours from the Homewind Touch.
 
 **Fan**
 
@@ -18,7 +18,7 @@ Find them in the profile editor: tap a field → filter **Extensions** → Homew
 | --- | --- |
 | **Homewind fan · numeric** | FAN · mode, fan dots, fan speed in % (green while running) |
 | **Homewind fan · zone colour** | Whole tile in 10 % step colours from the Homewind palette, white text |
-| **Homewind fan · control** | Wide: minus, mode (tap to switch), fan speed, fan dots, plus |
+| **Homewind fan · control** | Wide: minus, mode (tap to switch), fan speed, fan dots, plus; bottom line "HR 80–160 · FTP 250" (FTP only in Hybrid), so every plus/minus tap shows the new range. In low cells the dots are left out |
 | **Homewind fan · minus plus** | The two keys |
 | **Homewind fan · mode** | MODE; tap switches Pure → Smart → Hybrid |
 | **Homewind fan · plain number** | Fan speed as a plain Karoo number field |
@@ -40,7 +40,7 @@ Both draw Homewind's HR range (HR min/max, where the fan ramps from minimum to m
 
 | Field | Content |
 | --- | --- |
-| **Homewind apps** | Badges **APP** and **Trainer**, Touch colours: green = connected/ready, orange = was connected, now lost, grey = not yet. The Trainer badge is hidden without a mirrored trainer |
+| **Homewind apps** | Badges **APP** and **Trainer**, Touch colours: green = connected/ready, orange = was connected, now lost, grey = not yet. The Trainer badge is hidden without a mirrored trainer. **Tap: full-screen QR code** to the Homewind web UI (scan with a phone to change settings), tap again to close |
 
 **Sensors** (what Homewind relays; value in the sensor colour: HR pink, power violet, cadence blue; grey when disconnected)
 
@@ -75,8 +75,9 @@ Which buttons can carry Karoo actions: bonus buttons on SRAM RED AXS and Force A
 2. Open **Homewind** in the Karoo's app list.
 3. **Search Homewind** finds it with mDNS (`homewind-xxxxxxxx`). If nothing is found (some routers block multicast), type the IP address. The Homewind web UI or the router shows it. A fixed IP for Homewind in the router helps.
 4. **Test and save**. On failure the screen shows the reason.
-5. Optional: **Live test** opens the same connection as the data fields for 12 s and shows what arrives (mode, fan %, HR range, fans) or the error.
-6. Add a Homewind field to a ride profile and/or map the bonus actions.
+5. The setup screen shows a QR code to the Homewind web UI once an address is saved.
+6. Optional: **Live test** opens the same connection as the data fields for 12 s and shows what arrives (mode, fan %, HR range, fans) or the error.
+7. Add a Homewind field to a ride profile and/or map the bonus actions.
 
 The extension connects only while a Homewind field is on screen or a ride is recording, and disconnects otherwise.
 

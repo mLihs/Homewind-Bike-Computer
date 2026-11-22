@@ -9,6 +9,7 @@ import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.Button
 import android.widget.EditText
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
@@ -22,6 +23,7 @@ class SettingsActivity : Activity() {
     private lateinit var hostField: EditText
     private lateinit var status: TextView
     private lateinit var found: LinearLayout
+    private lateinit var qr: ImageView
     private var discovery: Discovery? = null
     private var foundName: String? = null
     private var liveTestRunning = false
@@ -55,7 +57,22 @@ class SettingsActivity : Activity() {
         status = text(statusLine(), 14f)
         root.addView(status)
 
+        // QR code to the Homewind web UI, for changing settings on a phone.
+        qr = ImageView(this)
+        root.addView(qr, LinearLayout.LayoutParams(dp(200), dp(200)).apply { topMargin = dp(12); gravity = Gravity.CENTER_HORIZONTAL })
+        showQr()
+
         setContentView(ScrollView(this).apply { addView(root) })
+    }
+
+    private fun showQr() {
+        val host = Prefs.host(this)
+        if (host == null) {
+            qr.visibility = android.view.View.GONE
+        } else {
+            qr.visibility = android.view.View.VISIBLE
+            qr.setImageBitmap(Qr.bitmap(Qr.webUiUrl(host), dp(200)))
+        }
     }
 
     private fun statusLine(): String {
@@ -104,6 +121,7 @@ class SettingsActivity : Activity() {
                     Prefs.save(this, host, foundName ?: Prefs.name(this).takeIf { Prefs.host(this) == host })
                     HomewindRuntime.reconnect()
                     status.text = "Saved: $host · $info"
+                    showQr()
                 } else {
                     status.text = "No answer from $host.\n$error\nCheck the address and that the Karoo's Wi-Fi is on."
                 }

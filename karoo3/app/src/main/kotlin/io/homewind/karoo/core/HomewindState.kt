@@ -56,6 +56,10 @@ data class HomewindState(
     val effective: FanMode? = null,
     val targetOn: Boolean = false,
     val targetPct: Int = 0,
+    /** FTP stored in Homewind (FAN_CONTROL), used by Hybrid. */
+    val ftpW: Int? = null,
+    /** Cool-down −2..+2 (XS..XL) of Smart and Hybrid. */
+    val cooldown: Int? = null,
     val fans: List<FanDot> = List(MAX_FANS) { FanDot.EMPTY },
     val fansKnown: Boolean = false,
     val clientId: Long? = null,

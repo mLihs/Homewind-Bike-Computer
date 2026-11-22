@@ -12,8 +12,8 @@ android {
         applicationId = "io.homewind.karoo"
         minSdk = 31 // Karoo 3: Android 12
         targetSdk = 34
-        versionCode = 11
-        versionName = "0.3.2"
+        versionCode = 12
+        versionName = "0.4.0"
     }
 
     // Release signing from environment (GitHub secrets in CI). Without it the release
@@ -60,6 +60,7 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.okhttp)
+    implementation(libs.zxing.core)
 
     testImplementation(libs.junit)
 }

@@ -60,6 +60,8 @@ object HomewindRuntime {
         val error: String? = null,
         /** Bumped on every new graph sample, so graph fields redraw. */
         val historyVersion: Int = 0,
+        /** Graph data for the field preview (demo); null = use [history]. */
+        val demoSamples: List<io.homewind.karoo.core.Sample>? = null,
     )
 
     /** Fan speed and heart rate over the last 10 minutes, for the graph fields. */

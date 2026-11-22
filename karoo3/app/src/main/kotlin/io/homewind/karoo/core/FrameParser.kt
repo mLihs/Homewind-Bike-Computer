@@ -53,6 +53,8 @@ object FrameParser {
             effective = effective,
             targetOn = p[3].u8() != 0,
             targetPct = p[4].u8().coerceIn(0, 100),
+            ftpW = if (p.size >= 9) p.u16(7) else state.ftpW,
+            cooldown = if (p.size >= 10) p[9].toInt() else state.cooldown,
         )
     }
 
