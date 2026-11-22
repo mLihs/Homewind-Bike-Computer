@@ -2,7 +2,7 @@
 
 Karoo 3 extension for [Homewind](https://github.com/mLihs/Homewind). It shows Homewind's fan state in Karoo data fields and changes fan speed and fan mode from the Karoo, from SRAM AXS bonus buttons or Wireless Blips.
 
-**Status: MVP 0.1.0.** Works with Homewind **2.0** as it is: no firmware change needed. Release 2 needs new Homewind endpoints (see below).
+**Status: 1.0.0.** Uses Homewind **2.2**'s state API (`GET /api/v1/state`, no WebSocket slot); works with Homewind 2.0 and 2.1 over the WebSocket.
 
 Karoo 3 only. Karoo and Homewind must be in the same Wi-Fi.
 
@@ -108,23 +108,24 @@ All POSTs send `X-Homewind: 1` (Homewind's CSRF check; without it 403). The oran
 
 ## Limits with Homewind 2.0 / 2.1
 
-- **Takes a browser slot.** Homewind 2.0 has no HTTP read for fan mode, fan speed or the HR range; only the WebSocket carries them. Homewind allows two WebSocket clients (`HW_WEBSOCKET_MAX_CLIENTS = 2`). While the Karoo is connected, only one browser fits: a second browser gets "max clients reached" (seen in the first test). If two browsers were there first, the Karoo shows *Web UI full* and tries again every 30 s.
-- **mDNS search is not always reliable** on the Karoo (0.1.2 holds a multicast lock during the search). Entering the IP always works; give Homewind a fixed IP in the router.
+- **Takes a browser slot.** Homewind 2.0 has no HTTP read for fan mode, fan speed or the HR range; only the WebSocket carries them. Homewind allows two WebSocket clients (`HW_WEBSOCKET_MAX_CLIENTS = 2`). While the Karoo is connected, only one browser fits: a second browser gets "max clients reached" (seen in the first test). If two browsers were there first, the Karoo shows *Web UI full* and tries again after 5 s, then every 30 s.
 - **Two NVS writes per tap.** 2.0 writes HR min and max separately and at once. Homewind 2.1 brings the shift request with a 3 s write debounce.
 - **Minus acts with delay in Smart and Hybrid.** 2.0 keeps the cool-down brake; the one-time hold release comes with 2.1.
 - **Fan dots by order, not by slot.** `FANS_SNAPSHOT` lists configured fans without gaps. With an empty slot in the middle the dots shift left.
 - **Limit state derived.** Without `limit=` the extension greys out a key from the HR range and the 50/200 bpm limits.
-- **Placeholder icon.** `ic_homewind.xml` is a placeholder; replace it with the Homewind fan icon.
 
-## Release 2 (with Homewind 2.2)
+## Troubleshooting
 
-Needs on the Homewind side:
-- `GET /api/v1/karoo/state`: one short key=value line with fixed buffer (`v=1`, mode, effective, fan %, four fan states, HR min/max, limit). The Karoo then polls over HTTP every 2–3 s and **no longer uses a WebSocket slot**.
-- `POST /api/v1/action/fan/step?dir=up|down`: the 2.1 shift request (one call, one debounced write).
-- `POST /api/v1/action/fanmode/cycle`: cycle with the shared Hybrid check.
-- Optional `MDNS.addService("homewind", "tcp", 80)` for a cleaner search.
+- **mDNS search is not always reliable** (the search holds a multicast lock). Entering the IP always works; give Homewind a fixed IP in the router.
+- **"Offline", `EHOSTUNREACH`, search finds nothing:** the Karoo got no ARP answer from Homewind. Seen with a FRITZ!Repeater in Wi-Fi bridge mode (Karoo on 5 GHz at one access point, Homewind on 2.4 GHz at the other): unplugging the repeater fixed it at once (2026-11-22). Check in the FRITZ!Box under Home Network → Mesh which access point each device uses; a repeater on a LAN bridge (cable) or Mesh Steering off helps. The setup test and the fields retry `EHOSTUNREACH` three times after 1 s.
+- **"Wi-Fi off":** turn Wi-Fi on in the ride app's Quick Settings.
+- **"Web UI full":** only with Homewind 2.0/2.1 (WebSocket); close a browser tab.
 
-Then the extension switches from WebSocket to HTTP polling and reads `v=` to stay compatible with 2.0/2.1.
+## Later
+
+- Device ID matching (`device_id` in `system/info`, Homewind 2.2) to tell two Homewinds apart and update a changed IP.
+- Router DNS step (`homewind-xxxxxxxx`) and a subnet sweep button when mDNS finds nothing.
+- Gratuitous ARP in Homewind if the measurement confirms missed ARP (feature request 6).
 
 ## Build and install
 

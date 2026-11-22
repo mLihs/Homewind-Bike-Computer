@@ -236,14 +236,21 @@ object HomewindRuntime {
         while (currentCoroutineContext().isActive) {
             val error: Outcome? = try {
                 val (code, body) = HomewindHttp.get(host, StateParser.PATH)
-                val parsed = if (code == 200) StateParser.parse(body, _field.value.hw) else null
+                val valid = code == 200 && StateParser.parse(body, HomewindState()) != null
                 when {
-                    parsed != null -> {
-                        if (gen != generation) return Outcome(Link.IDLE, opened, null)
+                    valid -> {
+                        // Parse inside update(): an action result applied meanwhile (limit, mode) is the base,
+                        // and a poll that returns after release cannot mark the link connected again.
+                        var applied = false
+                        _field.update {
+                            applied = gen == generation
+                            if (!applied) it
+                            else it.copy(link = Link.CONNECTED, hw = StateParser.parse(body, it.hw) ?: it.hw, error = null, api = Api.STATE, fresh = true)
+                        }
+                        if (!applied) return Outcome(Link.IDLE, opened, null)
                         opened = true
                         misses = 0
                         api = Api.STATE
-                        _field.update { it.copy(link = Link.CONNECTED, hw = parsed, error = null, api = Api.STATE, fresh = true) }
                         null
                     }
                     !opened && (code == 404 || code == 200) -> {

@@ -4,7 +4,7 @@ Bike computer integrations for [Homewind](https://github.com/mLihs/Homewind): sh
 
 | Folder | Device | Status |
 | --- | --- | --- |
-| [`karoo3/`](karoo3/) | Hammerhead Karoo 3 (karoo-ext extension) | MVP 0.1.0, works with Homewind 2.0 |
+| [`karoo3/`](karoo3/) | Hammerhead Karoo 3 (karoo-ext extension) | 1.0.0, Homewind 2.2 state API (2.0/2.1 over WebSocket) |
 
 Planned: Garmin (Connect IQ).
 

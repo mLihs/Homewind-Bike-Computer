@@ -20,7 +20,7 @@ import io.homewind.karoo.fields.hrField
 import io.homewind.karoo.fields.powerField
 
 /**
- * Homewind for Karoo 3, MVP for Homewind 2.0.
+ * Homewind for Karoo 3 (Homewind 2.2 state API; 2.0/2.1 over the WebSocket).
  *
  * Bonus actions (map them to AXS bonus buttons or Wireless Blips on the Karoo):
  * - `plus`  more wind: HR range −5 bpm
