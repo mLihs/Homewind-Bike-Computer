@@ -23,6 +23,7 @@ import kotlin.concurrent.thread
 class SettingsActivity : Activity() {
     private lateinit var hostField: EditText
     private lateinit var status: TextView
+    private lateinit var diag: TextView
     private lateinit var found: LinearLayout
     private lateinit var qr: ImageView
     private var discovery: Discovery? = null
@@ -56,7 +57,6 @@ class SettingsActivity : Activity() {
         root.addView(hostField, LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT))
 
         root.addView(button("Test and save") { testAndSave() })
-        root.addView(button("Live test (12 s)") { liveTest() })
         status = text(statusLine(), 14f)
         root.addView(status)
 
@@ -64,6 +64,13 @@ class SettingsActivity : Activity() {
         qr = ImageView(this)
         root.addView(qr, LinearLayout.LayoutParams(dp(200), dp(200)).apply { topMargin = dp(12); gravity = Gravity.CENTER_HORIZONTAL })
         showQr()
+
+        // Diagnosis: live view of the same connection the data fields use.
+        root.addView(text("Diagnosis", 14f, bold = true).apply { setPadding(0, dp(24), 0, 0) })
+        root.addView(text("Shows interface, mode, fan speed, HR range and fans for 12 s, or why the connection fails.", 12f))
+        root.addView(button("Live test (12 s)") { liveTest() })
+        diag = text("", 14f)
+        root.addView(diag)
 
         setContentView(ScrollView(this).apply { addView(root) })
     }
@@ -141,7 +148,7 @@ class SettingsActivity : Activity() {
      */
     private fun liveTest() {
         if (Prefs.host(this) == null) {
-            status.text = "Save an address first."
+            diag.text = "Save an address first."
             return
         }
         if (liveTestRunning) return
@@ -152,17 +159,17 @@ class SettingsActivity : Activity() {
             override fun run() {
                 val seconds = (System.currentTimeMillis() - start) / 1000
                 val done = seconds >= 12
-                status.text = describe(HomewindRuntime.field.value) + if (done) "\nTest finished." else "\n($seconds s)"
+                diag.text = describe(HomewindRuntime.field.value) + if (done) "\nTest finished." else "\n($seconds s)"
                 if (done) {
                     HomewindRuntime.release(LIVE_TEST)
                     liveTestRunning = false
                 } else {
-                    status.postDelayed(this, 500)
+                    diag.postDelayed(this, 500)
                 }
             }
         }
         liveTick = tick
-        status.post(tick)
+        diag.post(tick)
     }
 
     private fun describe(s: HomewindRuntime.FieldState): String {
@@ -188,7 +195,7 @@ class SettingsActivity : Activity() {
     override fun onDestroy() {
         if (liveTestRunning) HomewindRuntime.release(LIVE_TEST)
         searchTimeout?.let { found.removeCallbacks(it) }
-        liveTick?.let { status.removeCallbacks(it) }
+        liveTick?.let { diag.removeCallbacks(it) }
         discovery?.stop()
         super.onDestroy()
     }

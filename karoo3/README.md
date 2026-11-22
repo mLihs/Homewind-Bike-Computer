@@ -86,7 +86,7 @@ Which buttons can carry Karoo actions: bonus buttons on SRAM RED AXS and Force A
 3. **Search Homewind** finds it with mDNS (`homewind-xxxxxxxx`). If nothing is found (some routers block multicast), type the IP address. The Homewind web UI or the router shows it. A fixed IP for Homewind in the router helps.
 4. **Test and save**. On failure the screen shows the reason.
 5. The setup screen shows a QR code to the Homewind web UI once an address is saved.
-6. Optional: **Live test** opens the same connection as the data fields for 12 s and shows the interface (state API or WebSocket), what arrives (mode, fan %, HR range, fans) or the error.
+6. Optional: **Diagnosis → Live test** (bottom of the setup screen) opens the same connection as the data fields for 12 s and shows the interface (state API or WebSocket), what arrives (mode, fan %, HR range, fans) or the error.
 7. Add a Homewind field to a ride profile and/or map the bonus actions.
 
 The extension connects only while a Homewind field is on screen or a ride is recording, and disconnects 10 s after the last of them is gone (page swipes do not reconnect). A bonus action without a connection opens it for that action.
