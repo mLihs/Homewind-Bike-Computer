@@ -192,15 +192,15 @@ class StatusField(extension: String) : HomewindGraphicField(extension, "homewind
 }
 
 /**
- * "Homewind fan · zone colour": the whole tile in the 10 % step colour from blue (0 %)
- * to red (100 %), see [HeatScale]; dark text on light colours.
+ * "Homewind fan · zone colour": the whole tile in the 10 % step colour of the Homewind
+ * palette, cadence blue (0 %) to HR pink (90 % and up), see [HeatScale]; white text.
  */
 class FanColorField(extension: String) : HomewindGraphicField(extension, "homewind-fan-color") {
     @Composable
     override fun Content(config: ViewConfig, state: HomewindRuntime.FieldState) {
         if (!state.hw.hasFanControl) { Waiting(); return }
         val argb = HeatScale.colorFor(state.hw.shownPct)
-        val text = if (HeatScale.prefersDarkText(argb)) Color.Black else Color.White
+        val text = Color.White
         Card(R.drawable.ic_fan, text, "Fan · ${modeLabel(state.hw)}", background = Color(argb), titleColor = text) {
             Row(modifier = GlanceModifier.fillMaxWidth()) {
                 Spacer(GlanceModifier.defaultWeight())

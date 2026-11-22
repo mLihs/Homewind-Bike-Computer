@@ -5,7 +5,7 @@
     <string name="field_status">Homewind fan · numeric</string>
     <string name="field_status_description">Fan speed, mode and fan states</string>
     <string name="field_fan_color">Homewind fan · zone colour</string>
-    <string name="field_fan_color_description">Fan speed, tile coloured from blue (zero) to red (full)</string>
+    <string name="field_fan_color_description">Fan speed, tile coloured from cadence blue (zero) to heart-rate pink (full)</string>
     <string name="field_control">Homewind fan · control</string>
     <string name="field_control_description">Wide: minus, mode (tap to switch), fan speed, fan states, plus</string>
     <string name="field_keys">Homewind fan · minus plus</string>
@@ -17,7 +17,7 @@
     <string name="field_graph">Homewind graph · fan and HR</string>
     <string name="field_graph_description">Fan speed (green) and heart rate (pink) over the last 10 minutes</string>
     <string name="field_graph_zones">Homewind graph · zones</string>
-    <string name="field_graph_zones_description">Fan speed in step colours (blue to red) and heart rate (white) over the last 10 minutes</string>
+    <string name="field_graph_zones_description">Fan speed in step colours (blue to pink) and heart rate (white) over the last 10 minutes</string>
     <string name="field_apps">Homewind apps</string>
     <string name="field_apps_description">App and trainer connected to Homewind</string>
     <string name="field_sensors">Homewind sensors</string>

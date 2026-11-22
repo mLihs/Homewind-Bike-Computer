@@ -17,7 +17,7 @@ Find them in the profile editor: tap a field → filter **Extensions** → Homew
 | Field | Content |
 | --- | --- |
 | **Homewind fan · numeric** | FAN · mode, fan dots, fan speed in % (green while running) |
-| **Homewind fan · zone colour** | Whole tile in 10 % step colours: 0 % blue → cyan → green → yellow → 100 % red; dark text on light colours |
+| **Homewind fan · zone colour** | Whole tile in 10 % step colours from the Homewind palette, white text |
 | **Homewind fan · control** | Wide: minus, mode (tap to switch), fan speed, fan dots, plus |
 | **Homewind fan · minus plus** | The two keys |
 | **Homewind fan · mode** | MODE; tap switches Pure → Smart → Hybrid |
@@ -31,6 +31,8 @@ Fan dots, Touch colours: green = fan runs in the control, white = connected but 
 | --- | --- |
 | **Homewind graph · fan and HR** | Fan speed as green area, heart rate as pink line |
 | **Homewind graph · zones** | Fan speed as bars in the 10 % step colours, heart rate as white line |
+
+Step colours (Homewind palette, cadence blue → HR pink): 0 % `#0E7FA3`, 10 % `#27739C`, 20 % `#406695`, 30 % `#595A8F`, 40 % `#724D88`, 50 % `#8C4181`, 60 % `#A5347A`, 70 % `#BE2874`, 80 % `#D71B6D`, 90 % and up `#F00F66`.
 
 Both draw Homewind's HR range (HR min/max, where the fan ramps from minimum to maximum) as faint dashed lines; the header shows the current fan speed and heart rate. The history lives in memory only and starts when a Homewind field is on screen or a ride is recording.
 
