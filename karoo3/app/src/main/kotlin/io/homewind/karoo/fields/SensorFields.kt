@@ -68,7 +68,6 @@ internal enum class Kind(val icon: Int, val color: Color, val title: String, val
 /** Rows of the combined field: three fit, a fourth is cut off. Speed has its own field and sits in the wide Apps field. */
 private val COMBINED = listOf(Kind.HR, Kind.POWER, Kind.CADENCE)
 
-private const val ROW_GAP_DP = 6
 
 /** "Homewind sensors": one line per set-up sensor: icon, source name, value in the sensor colour. */
 class SensorsField(extension: String) : HomewindGraphicField(extension, "homewind-sensors") {
@@ -80,21 +79,15 @@ class SensorsField(extension: String) : HomewindGraphicField(extension, "homewin
         if (state.hw.sensors == null) { Waiting(); return }
         val rows = COMBINED.map { it to it.row(state.hw) }.filter { it.second.status != RowStatus.NOT_CONFIGURED }
         if (rows.isEmpty()) { Message("No sensors"); return }
-        // Rows as tall as their text, grouped in the middle: no spread-out gaps, no clipped descenders
-        // ("rpm"). The value size follows the height per row.
+        // Each row gets exactly a third of the height (no gaps, no padding), so nothing reaches past
+        // the field. The value is sized so its text line (about 1.3 × the size, incl. font padding)
+        // fits the row; on the Karoo 3 that is about the size of 1.1.6, which looked right.
         val heightDp = config.viewSize.second / LocalContext.current.resources.displayMetrics.density
-        // Height per row after 2 dp padding top and bottom and 6 dp between rows; a text line takes
-        // about 1.25 × its size, so this is the largest value that fits without clipping.
-        val rowDp = (heightDp - 4 - ROW_GAP_DP * (rows.size - 1)) / rows.size
-        val valueSp = minOf(40, (rowDp / 1.25f).toInt() + 4).coerceAtLeast(12)
-        Column(
-            modifier = GlanceModifier.fillMaxSize().padding(horizontal = 8.dp, vertical = 2.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            rows.forEachIndexed { i, (kind, r) ->
+        val valueSp = minOf(40, (heightDp / rows.size / 1.3f).toInt()).coerceAtLeast(12)
+        Column(modifier = GlanceModifier.fillMaxSize().padding(horizontal = 8.dp)) {
+            rows.forEach { (kind, r) ->
                 val active = r.status == RowStatus.ACTIVE
-                if (i > 0) Spacer(GlanceModifier.height(ROW_GAP_DP.dp))
-                Row(modifier = GlanceModifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Row(modifier = GlanceModifier.fillMaxWidth().defaultWeight(), verticalAlignment = Alignment.CenterVertically) {
                     Icon(kind.icon, if (active) kind.color else MUTED)
                     Spacer(GlanceModifier.width(6.dp))
                     Text(r.name ?: "", style = small(TextAlign.Start).copy(fontSize = 10.sp), maxLines = 1, modifier = GlanceModifier.defaultWeight())
