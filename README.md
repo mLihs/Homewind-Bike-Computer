@@ -8,7 +8,7 @@ The apps here bring Homewind to the bike computer: see your wind as data fields 
 
 | Folder | Device | Status |
 | --- | --- | --- |
-| [`karoo3/`](karoo3/) | Hammerhead Karoo 3 (karoo-ext extension) | 1.1.5, Homewind 2.2 state API (2.0/2.1 over WebSocket) |
+| [`karoo3/`](karoo3/) | Hammerhead Karoo 3 (karoo-ext extension) | 1.1.6, Homewind 2.2 state API (2.0/2.1 over WebSocket) |
 
 Planned: Garmin (Connect IQ).
 
@@ -43,7 +43,7 @@ Give Homewind a fixed IP address in your router; then the Karoo finds it every t
 **FAQ**
 
 - **Offline, or the search finds nothing:** usually a Wi-Fi repeater between Karoo and Homewind. In our test a FRITZ!Repeater in Wi-Fi bridge mode was the cause; unplugging it fixed it at once. Connect the repeater by cable or check which access point each device uses.
-- **Wi-Fi off:** the ride app turned Wi-Fi off; swipe down and turn it on.
+- **Wi-Fi off:** the ride app turned Wi-Fi off; tap the field to open the Wi-Fi panel and turn it on.
 - **Browser slot:** with Homewind 2.2 the Karoo takes none; with 2.0/2.1 it uses one of the two.
 - **Always connected?** No. Only while a Homewind field is on screen or a ride is recording, then about 10 s more.
 - **Other settings:** heart rate range and mode from the Karoo; everything else in the Homewind web UI (tap the Apps field for a QR code).

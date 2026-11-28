@@ -189,7 +189,7 @@ object HomewindRuntime {
                 awaitCancellation() // reconnect() restarts the loop after a save
             }
             if (!WifiWatcher.up.value) {
-                setError("Turn Wi-Fi on in Quick Settings")
+                setError("Tap to turn Wi-Fi on")
                 setLink(Link.WIFI_OFF)
                 WifiWatcher.up.first { it } // wait for Wi-Fi, then connect at once
                 backoffMs = 3_000L

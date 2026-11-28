@@ -2,7 +2,7 @@
 
 Karoo 3 extension for [Homewind](https://homewind.io), the open-source fan controller for indoor cyclists: it turns the Xiaomi fan you already own into a training fan that follows your heart rate or power. The extension shows Homewind's fan state in Karoo data fields and changes fan speed and fan mode from the Karoo, from SRAM AXS bonus buttons or Wireless Blips.
 
-**Status: 1.1.5.** Uses Homewind **2.2**'s state API (`GET /api/v1/state`, no WebSocket slot); works with Homewind 2.0 and 2.1 over the WebSocket.
+**Status: 1.1.6.** Uses Homewind **2.2**'s state API (`GET /api/v1/state`, no WebSocket slot); works with Homewind 2.0 and 2.1 over the WebSocket.
 
 Karoo 3 only. Karoo and Homewind must be in the same Wi-Fi. Install, requirements and FAQ for riders: [main README](../README.md#homewind-for-karoo-3).
 
@@ -118,7 +118,7 @@ All POSTs send `X-Homewind: 1` (Homewind's CSRF check; without it 403). The oran
 
 - **mDNS search is not always reliable** (the search holds a multicast lock). Entering the IP always works; give Homewind a fixed IP in the router.
 - **"Offline", `EHOSTUNREACH`, search finds nothing:** the Karoo got no ARP answer from Homewind. Seen with a FRITZ!Repeater in Wi-Fi bridge mode (Karoo on 5 GHz at one access point, Homewind on 2.4 GHz at the other): unplugging the repeater fixed it at once (2026-11-22). Check in the FRITZ!Box under Home Network → Mesh which access point each device uses; a repeater on a LAN bridge (cable) or Mesh Steering off helps. The setup test and the fields retry `EHOSTUNREACH` three times after 1 s.
-- **"Wi-Fi off":** turn Wi-Fi on in the ride app's Quick Settings.
+- **"Wi-Fi off":** tap the field: it opens Android's Wi-Fi panel (or use the ride app's Quick Settings).
 - **"Web UI full":** only with Homewind 2.0/2.1 (WebSocket); close a browser tab.
 
 ## Later

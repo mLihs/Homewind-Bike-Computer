@@ -86,7 +86,7 @@ class SensorsField(extension: String) : HomewindGraphicField(extension, "homewin
         // Height per row after 2 dp padding top and bottom and 6 dp between rows; a text line takes
         // about 1.25 × its size, so this is the largest value that fits without clipping.
         val rowDp = (heightDp - 4 - ROW_GAP_DP * (rows.size - 1)) / rows.size
-        val valueSp = minOf(36, (rowDp / 1.25f).toInt()).coerceAtLeast(12)
+        val valueSp = minOf(40, (rowDp / 1.25f).toInt() + 4).coerceAtLeast(12)
         Column(
             modifier = GlanceModifier.fillMaxSize().padding(horizontal = 8.dp, vertical = 2.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -166,7 +166,7 @@ class AppsField(extension: String) : HomewindGraphicField(extension, "homewind-a
                 state.hw.trainer?.takeIf { it.mirror }?.name?.ifBlank { null }?.let { add(it) }
             }.joinToString(" · ")
             Text(detail, style = small(TextAlign.End), maxLines = 1, modifier = GlanceModifier.fillMaxWidth())
-            Row(modifier = GlanceModifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Row(modifier = GlanceModifier.fillMaxWidth(), verticalAlignment = Alignment.Bottom) {
                 // Wide field only: trainer speed on the left, next to the badges.
                 val widthDp = config.viewSize.first / LocalContext.current.resources.displayMetrics.density
                 val speed = Display.speed(state.hw)
@@ -189,10 +189,13 @@ class AppsField(extension: String) : HomewindGraphicField(extension, "homewind-a
                     }
                 }
                 Spacer(GlanceModifier.defaultWeight())
-                BadgeChip("APP", app)
-                if (trainer != Badge.HIDDEN) {
-                    Spacer(GlanceModifier.width(6.dp))
-                    BadgeChip("Trainer", trainer)
+                // Card bottom padding is 0 here: the badges keep 8 dp to the bottom, as to the right.
+                Row(modifier = GlanceModifier.padding(bottom = 8.dp)) {
+                    BadgeChip("APP", app)
+                    if (trainer != Badge.HIDDEN) {
+                        Spacer(GlanceModifier.width(6.dp))
+                        BadgeChip("Trainer", trainer)
+                    }
                 }
             }
         }

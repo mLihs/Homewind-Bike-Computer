@@ -1,6 +1,10 @@
 package io.homewind.karoo.fields
 
 import android.content.Context
+import android.content.Intent
+import android.provider.Settings
+import androidx.glance.action.clickable
+import androidx.glance.appwidget.action.actionStartActivity
 import android.os.RemoteException
 import android.util.Log
 import androidx.compose.runtime.Composable
@@ -100,7 +104,9 @@ abstract class HomewindGraphicField(extension: String, typeId: String) : DataTyp
     ): Boolean {
         return try {
             val result = glance.compose(context, DpSize.Unspecified) {
-                Rounded(BACKGROUND, GlanceModifier.fillMaxSize()) {
+                // Wi-Fi off (the Karoo turns it off at ride start): a tap opens Android's Wi-Fi panel.
+                val base = GlanceModifier.fillMaxSize()
+                Rounded(BACKGROUND, if (state.link == Link.WIFI_OFF) base.clickable(actionStartActivity(WIFI_PANEL)) else base) {
                     if (state.link != Link.CONNECTED) LinkBlock(state) else Content(config, state)
                 }
             }
@@ -120,6 +126,7 @@ abstract class HomewindGraphicField(extension: String, typeId: String) : DataTyp
 
     companion object {
         private const val TAG = "HomewindField"
+        private val WIFI_PANEL = Intent(Settings.Panel.ACTION_WIFI).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         const val MIN_RENDER_MS = 1_000L
     }
 }
