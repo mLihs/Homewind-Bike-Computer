@@ -14,8 +14,8 @@ android {
         targetSdk = 34
         // versionCode = major * 10000 + minor * 100 + patch (CI checks it). The Karoo
         // compares it with latestVersionCode in manifest.json to offer updates.
-        versionCode = 10108
-        versionName = "1.1.8"
+        versionCode = 10109
+        versionName = "1.1.9"
     }
 
     // Release signing from environment (GitHub secrets in CI). Without it the release

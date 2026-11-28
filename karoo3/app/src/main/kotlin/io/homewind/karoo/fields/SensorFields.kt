@@ -4,7 +4,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.graphics.toArgb
 import androidx.glance.GlanceModifier
+import androidx.glance.Image
+import androidx.glance.ImageProvider
+import androidx.glance.layout.ContentScale
 import androidx.glance.LocalContext
 import androidx.glance.action.actionStartActivity
 import androidx.glance.action.clickable
@@ -80,34 +84,22 @@ class SensorsField(extension: String) : HomewindGraphicField(extension, "homewin
         if (state.hw.sensors == null) { Waiting(); return }
         val rows = COMBINED.map { it to it.row(state.hw) }.filter { it.second.status != RowStatus.NOT_CONFIGURED }
         if (rows.isEmpty()) { Message("No sensors"); return }
-        // Value size as in 1.1.7 (its text line fits a third of the height). Rows are then made
-        // shorter than that line: the value sits in a box aligned to the bottom, so only the empty
-        // font padding above the digits is cut off. That halves the visible gap between the rows;
-        // the three rows stay together in the middle of the field.
-        val heightDp = config.viewSize.second / LocalContext.current.resources.displayMetrics.density
-        val valueSp = minOf(40, (heightDp / rows.size / 1.3f).toInt()).coerceAtLeast(12)
-        val rowDp = valueSp * 1.0f
-        Column(
-            modifier = GlanceModifier.fillMaxSize().padding(horizontal = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            rows.forEach { (kind, r) ->
-                val active = r.status == RowStatus.ACTIVE
-                Row(modifier = GlanceModifier.fillMaxWidth().height(rowDp.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Icon(kind.icon, if (active) kind.color else MUTED)
-                    Spacer(GlanceModifier.width(6.dp))
-                    Text(r.name ?: "", style = small(TextAlign.Start).copy(fontSize = 10.sp), maxLines = 1, modifier = GlanceModifier.defaultWeight())
-                    Box(modifier = GlanceModifier.height(rowDp.dp), contentAlignment = if (active) Alignment.BottomEnd else Alignment.CenterEnd) {
-                        Text(
-                            sensorValue(kind, r, state.hw),
-                            style = bold(if (active) valueSp else minOf(valueSp, 14), TextAlign.End)
-                                .copy(color = ColorProvider(if (active) kind.color else MUTED)),
-                            maxLines = 1,
-                        )
-                    }
-                }
-            }
-        }
+        // Drawn into a bitmap: shared baseline for name and value, icons centred, see [SensorsRenderer].
+        val bitmap = SensorsRenderer.render(
+            LocalContext.current,
+            config.viewSize.first,
+            config.viewSize.second,
+            rows.map { (kind, r) ->
+                SensorsRenderer.Line(kind.icon, kind.color.toArgb(), r.name ?: "", sensorValue(kind, r, state.hw), r.status == RowStatus.ACTIVE)
+            },
+            MUTED.toArgb(),
+        )
+        Image(
+            provider = ImageProvider(bitmap),
+            contentDescription = null,
+            modifier = GlanceModifier.fillMaxSize(),
+            contentScale = ContentScale.FillBounds,
+        )
     }
 }
 
