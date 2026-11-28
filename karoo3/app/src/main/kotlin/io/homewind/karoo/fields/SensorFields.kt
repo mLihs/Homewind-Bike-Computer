@@ -13,6 +13,7 @@ import androidx.glance.layout.Row
 import androidx.glance.layout.Spacer
 import androidx.glance.layout.fillMaxSize
 import androidx.glance.layout.fillMaxWidth
+import androidx.glance.layout.height
 import androidx.glance.layout.padding
 import androidx.glance.layout.width
 import androidx.glance.text.Text
@@ -76,16 +77,24 @@ class SensorsField(extension: String) : HomewindGraphicField(extension, "homewin
         if (state.hw.sensors == null) { Waiting(); return }
         val rows = COMBINED.map { it to it.row(state.hw) }.filter { it.second.status != RowStatus.NOT_CONFIGURED }
         if (rows.isEmpty()) { Message("No sensors"); return }
-        Column(modifier = GlanceModifier.fillMaxSize().padding(horizontal = 8.dp, vertical = 2.dp)) {
-            rows.forEach { (kind, r) ->
+        // Rows as tall as their text, grouped in the middle: no spread-out gaps, no clipped descenders
+        // ("rpm"). The value size follows the height per row.
+        val heightDp = config.viewSize.second / LocalContext.current.resources.displayMetrics.density
+        val valueSp = minOf(config.textSize, 22, (heightDp / rows.size * 0.5f).toInt()).coerceAtLeast(12)
+        Column(
+            modifier = GlanceModifier.fillMaxSize().padding(horizontal = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            rows.forEachIndexed { i, (kind, r) ->
                 val active = r.status == RowStatus.ACTIVE
-                Row(modifier = GlanceModifier.fillMaxWidth().defaultWeight(), verticalAlignment = Alignment.CenterVertically) {
+                if (i > 0) Spacer(GlanceModifier.height(2.dp))
+                Row(modifier = GlanceModifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                     Icon(kind.icon, if (active) kind.color else MUTED)
                     Spacer(GlanceModifier.width(6.dp))
                     Text(r.name ?: "", style = small(TextAlign.Start), maxLines = 1, modifier = GlanceModifier.defaultWeight())
                     Text(
                         sensorValue(kind, r, state.hw),
-                        style = bold(if (active) minOf(config.textSize, 24) else 14, TextAlign.End)
+                        style = bold(if (active) valueSp else minOf(valueSp, 14), TextAlign.End)
                             .copy(color = ColorProvider(if (active) kind.color else MUTED)),
                         maxLines = 1,
                     )
@@ -155,8 +164,6 @@ class AppsField(extension: String) : HomewindGraphicField(extension, "homewind-a
                 val speed = Display.speed(state.hw)
                 if (widthDp >= WIDE_DP && speed.status != RowStatus.NOT_CONFIGURED) {
                     val active = speed.status == RowStatus.ACTIVE
-                    Icon(Kind.SPEED.icon, if (active) Kind.SPEED.color else MUTED)
-                    Spacer(GlanceModifier.width(6.dp))
                     Text(
                         if (active) "${Kind.SPEED.valueText(speed.value)}${Kind.SPEED.unit}" else "–",
                         style = bold(if (active) minOf(config.textSize, 24) else 16, TextAlign.Start)
