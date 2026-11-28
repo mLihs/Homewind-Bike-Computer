@@ -15,7 +15,7 @@ package io.homewind.karoo.core
  * hr_sensor=1          1 connected, 0 disconnected, - not set up (same for pwr_sensor, csc_sensor)
  * power=210,1,0        W, valid, from trainer
  * cadence=88,1,1       rpm, valid, from power meter
- * speed=324,1          0.1 km/h, valid
+ * speed=324,1          trainer speed in 0.1 km/h, valid
  * trainer=4,1          BikeSensor TrainerState, mirror (key missing = no trainer)
  * apps=1
  * hr_name=Polar H10    (pwr_name, csc_name, trainer_name)

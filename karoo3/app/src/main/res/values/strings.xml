@@ -29,7 +29,7 @@
     <string name="field_cadence">Homewind sensor · cadence</string>
     <string name="field_cadence_description">Cadence through Homewind (sensor, power meter or trainer)</string>
     <string name="field_speed">Homewind sensor · speed</string>
-    <string name="field_speed_description">Speed through Homewind in km/h (needs Homewind 2.2)</string>
+    <string name="field_speed_description">Trainer speed through Homewind in km/h (needs Homewind 2.2)</string>
     <string name="action_plus">Homewind +</string>
     <string name="action_minus">Homewind −</string>
     <string name="action_mode">Homewind mode</string>

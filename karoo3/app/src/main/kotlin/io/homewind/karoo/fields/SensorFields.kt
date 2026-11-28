@@ -80,7 +80,7 @@ class SensorsField(extension: String) : HomewindGraphicField(extension, "homewin
                     Spacer(GlanceModifier.width(6.dp))
                     Text(r.name ?: "", style = small(TextAlign.Start), maxLines = 1, modifier = GlanceModifier.defaultWeight())
                     Text(
-                        sensorValue(kind, r),
+                        sensorValue(kind, r, state.hw),
                         style = bold(if (active) minOf(config.textSize, 24) else 14, TextAlign.End)
                             .copy(color = ColorProvider(if (active) kind.color else MUTED)),
                         maxLines = 1,
@@ -105,8 +105,8 @@ private class SingleSensorField(extension: String, typeId: String, private val k
         Card(kind.icon, if (active) kind.color else MUTED, kind.title) {
             Row(modifier = GlanceModifier.fillMaxWidth(), verticalAlignment = Alignment.Bottom) {
                 Text(r.name ?: "", style = small(TextAlign.Start), maxLines = 1, modifier = GlanceModifier.defaultWeight())
-                if (active) Value(sensorValue(kind, r), kind.color, config)
-                else Text(sensorValue(kind, r), style = bold(16, TextAlign.End).copy(color = ColorProvider(MUTED)), maxLines = 1)
+                if (active) Value(sensorValue(kind, r, state.hw), kind.color, config)
+                else Text(sensorValue(kind, r, state.hw), style = bold(16, TextAlign.End).copy(color = ColorProvider(MUTED)), maxLines = 1)
             }
         }
     }
@@ -117,10 +117,14 @@ fun powerField(extension: String): DataTypeImpl = SingleSensorField(extension, "
 fun cadenceField(extension: String): DataTypeImpl = SingleSensorField(extension, "homewind-cadence", Kind.CADENCE)
 fun speedField(extension: String): DataTypeImpl = SingleSensorField(extension, "homewind-speed", Kind.SPEED)
 
-private fun sensorValue(kind: Kind, r: SensorRow): String = when (r.status) {
+private fun sensorValue(kind: Kind, r: SensorRow, hw: HomewindState): String = when (r.status) {
     RowStatus.ACTIVE -> "${kind.valueText(r.value)}${kind.unit}"
     RowStatus.DISCONNECTED -> "Disconnected"
-    RowStatus.NOT_CONFIGURED -> if (kind == Kind.SPEED) "Homewind 2.2" else "Not set up" // speed needs the state API
+    RowStatus.NOT_CONFIGURED -> when {
+        kind != Kind.SPEED -> "Not set up"
+        hw.speedKmh10 == null -> "Homewind 2.2" // speed needs the state API
+        else -> "No trainer"
+    }
 }
 
 /** "Homewind apps": APPS card with the badges APP and Trainer (Touch colours); tap opens the QR code. */

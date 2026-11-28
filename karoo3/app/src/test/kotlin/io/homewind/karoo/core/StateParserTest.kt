@@ -60,13 +60,15 @@ class StateParserTest {
         assertTrue(s.speedValid)
         val row = Display.speed(s)
         assertEquals(RowStatus.ACTIVE, row.status)
-        assertEquals("Tacx NEO 2T", row.name) // no CSC sensor: trainer
+        assertEquals("Tacx NEO 2T", row.name) // trainer speed
         assertEquals("32.4", Display.speedText(row.value!!))
         assertEquals("0.5", Display.speedText(5))
         val invalid = StateParser.parse(full.replace("speed=324,1", "speed=0,0"), HomewindState())!!
         assertEquals(RowStatus.DISCONNECTED, Display.speed(invalid).status)
         val old = StateParser.parse(full.replace("speed=324,1\r\n", ""), HomewindState())!!
         assertEquals(RowStatus.NOT_CONFIGURED, Display.speed(old).status)
+        val noMirror = StateParser.parse(full.replace("trainer=4,1", "trainer=0,0"), HomewindState())!!
+        assertEquals(RowStatus.NOT_CONFIGURED, Display.speed(noMirror).status)
     }
 
     @Test fun displayRulesWorkOnPolledState() {
