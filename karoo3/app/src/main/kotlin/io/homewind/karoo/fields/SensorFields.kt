@@ -3,6 +3,7 @@ package io.homewind.karoo.fields
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.glance.GlanceModifier
 import androidx.glance.LocalContext
 import androidx.glance.action.actionStartActivity
@@ -80,7 +81,7 @@ class SensorsField(extension: String) : HomewindGraphicField(extension, "homewin
         // Rows as tall as their text, grouped in the middle: no spread-out gaps, no clipped descenders
         // ("rpm"). The value size follows the height per row.
         val heightDp = config.viewSize.second / LocalContext.current.resources.displayMetrics.density
-        val valueSp = minOf(config.textSize, 22, (heightDp / rows.size * 0.5f).toInt()).coerceAtLeast(12)
+        val valueSp = minOf(config.textSize, 28, (heightDp / rows.size * 0.62f).toInt()).coerceAtLeast(12)
         Column(
             modifier = GlanceModifier.fillMaxSize().padding(horizontal = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -91,7 +92,7 @@ class SensorsField(extension: String) : HomewindGraphicField(extension, "homewin
                 Row(modifier = GlanceModifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                     Icon(kind.icon, if (active) kind.color else MUTED)
                     Spacer(GlanceModifier.width(6.dp))
-                    Text(r.name ?: "", style = small(TextAlign.Start), maxLines = 1, modifier = GlanceModifier.defaultWeight())
+                    Text(r.name ?: "", style = small(TextAlign.Start).copy(fontSize = 10.sp), maxLines = 1, modifier = GlanceModifier.defaultWeight())
                     Text(
                         sensorValue(kind, r, state.hw),
                         style = bold(if (active) valueSp else minOf(valueSp, 14), TextAlign.End)
@@ -164,12 +165,21 @@ class AppsField(extension: String) : HomewindGraphicField(extension, "homewind-a
                 val speed = Display.speed(state.hw)
                 if (widthDp >= WIDE_DP && speed.status != RowStatus.NOT_CONFIGURED) {
                     val active = speed.status == RowStatus.ACTIVE
-                    Text(
-                        if (active) "${Kind.SPEED.valueText(speed.value)}${Kind.SPEED.unit}" else "–",
-                        style = bold(if (active) minOf(config.textSize, 24) else 16, TextAlign.Start)
-                            .copy(color = ColorProvider(if (active) Kind.SPEED.color else MUTED)),
-                        maxLines = 1,
-                    )
+                    // Value large, unit small next to it.
+                    Row(verticalAlignment = Alignment.Bottom) {
+                        Text(
+                            if (active) Kind.SPEED.valueText(speed.value) else "–",
+                            style = bold(if (active) minOf(config.textSize, 28) else 16, TextAlign.Start)
+                                .copy(color = ColorProvider(if (active) Kind.SPEED.color else MUTED)),
+                            maxLines = 1,
+                        )
+                        if (active) Text(
+                            " km/h",
+                            style = bold(12, TextAlign.Start).copy(color = ColorProvider(Kind.SPEED.color)),
+                            maxLines = 1,
+                            modifier = GlanceModifier.padding(bottom = 3.dp),
+                        )
+                    }
                 }
                 Spacer(GlanceModifier.defaultWeight())
                 BadgeChip("APP", app)
