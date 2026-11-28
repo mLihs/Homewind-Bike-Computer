@@ -75,6 +75,9 @@ data class HomewindState(
     /** An app was connected at least once while connected (orange badge when it drops). */
     val appWasConnected: Boolean = false,
     val bike: BikeMetrics? = null,
+    /** Speed in 0.1 km/h from `GET /api/v1/state` (`speed=`); null = not reported (older firmware). */
+    val speedKmh10: Int? = null,
+    val speedValid: Boolean = false,
     /** HR range at a hard limit, from `GET /api/v1/state` (`limit=`); null = not reported. */
     val limit: HrLimit? = null,
     /** The power meter delivered cadence once (keeps the cadence row, as on the Touch). */

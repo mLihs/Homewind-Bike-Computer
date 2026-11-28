@@ -47,6 +47,8 @@ object Demo {
                 powerFromTrainer = false,
             ),
             cadenceFromPowerMeterSeen = true,
+            speedKmh10 = (300 + w * 60).roundToInt(),
+            speedValid = true,
         )
     }
 

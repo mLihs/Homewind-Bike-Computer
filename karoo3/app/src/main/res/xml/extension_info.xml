@@ -21,6 +21,7 @@
     <DataType typeId="homewind-hr" displayName="@string/field_hr" description="@string/field_hr_description" graphical="true" icon="@drawable/ic_heart" />
     <DataType typeId="homewind-power" displayName="@string/field_power" description="@string/field_power_description" graphical="true" icon="@drawable/ic_bolt" />
     <DataType typeId="homewind-cadence" displayName="@string/field_cadence" description="@string/field_cadence_description" graphical="true" icon="@drawable/ic_crank" />
+    <DataType typeId="homewind-speed" displayName="@string/field_speed" description="@string/field_speed_description" graphical="true" icon="@drawable/ic_speed" />
 
     <!-- Graphs -->
     <DataType typeId="homewind-graph" displayName="@string/field_graph" description="@string/field_graph_description" graphical="true" icon="@drawable/ic_homewind" />

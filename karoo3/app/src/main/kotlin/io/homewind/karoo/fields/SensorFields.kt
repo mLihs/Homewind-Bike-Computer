@@ -36,6 +36,7 @@ import io.homewind.karoo.ui.Icon
 import io.homewind.karoo.ui.MUTED
 import io.homewind.karoo.ui.Message
 import io.homewind.karoo.ui.POWER_ON
+import io.homewind.karoo.ui.SPEED_ON
 import io.homewind.karoo.ui.Value
 import io.homewind.karoo.ui.Waiting
 import io.homewind.karoo.ui.bold
@@ -44,12 +45,20 @@ import io.homewind.karoo.ui.small
 internal enum class Kind(val icon: Int, val color: Color, val title: String, val unit: String) {
     HR(R.drawable.ic_heart, HR_ON, "HR", ""),
     POWER(R.drawable.ic_bolt, POWER_ON, "Power", " W"),
-    CADENCE(R.drawable.ic_crank, CADENCE_ON, "Cadence", " rpm");
+    CADENCE(R.drawable.ic_crank, CADENCE_ON, "Cadence", " rpm"),
+    SPEED(R.drawable.ic_speed, SPEED_ON, "Speed", " km/h");
 
     fun row(hw: HomewindState): SensorRow = when (this) {
         HR -> Display.heartRate(hw)
         POWER -> Display.power(hw)
         CADENCE -> Display.cadence(hw)
+        SPEED -> Display.speed(hw)
+    }
+
+    /** Value text of an active row; speed comes in 0.1 km/h. */
+    fun valueText(value: Int?): String = when (this) {
+        SPEED -> value?.let { Display.speedText(it) } ?: ""
+        else -> "${value ?: ""}"
     }
 }
 
@@ -106,11 +115,12 @@ private class SingleSensorField(extension: String, typeId: String, private val k
 fun hrField(extension: String): DataTypeImpl = SingleSensorField(extension, "homewind-hr", Kind.HR)
 fun powerField(extension: String): DataTypeImpl = SingleSensorField(extension, "homewind-power", Kind.POWER)
 fun cadenceField(extension: String): DataTypeImpl = SingleSensorField(extension, "homewind-cadence", Kind.CADENCE)
+fun speedField(extension: String): DataTypeImpl = SingleSensorField(extension, "homewind-speed", Kind.SPEED)
 
 private fun sensorValue(kind: Kind, r: SensorRow): String = when (r.status) {
-    RowStatus.ACTIVE -> "${r.value}${kind.unit}"
+    RowStatus.ACTIVE -> "${kind.valueText(r.value)}${kind.unit}"
     RowStatus.DISCONNECTED -> "Disconnected"
-    RowStatus.NOT_CONFIGURED -> "Not set up"
+    RowStatus.NOT_CONFIGURED -> if (kind == Kind.SPEED) "Homewind 2.2" else "Not set up" // speed needs the state API
 }
 
 /** "Homewind apps": APPS card with the badges APP and Trainer (Touch colours); tap opens the QR code. */

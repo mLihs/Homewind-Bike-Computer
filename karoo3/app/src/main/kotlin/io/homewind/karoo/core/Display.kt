@@ -60,6 +60,19 @@ object Display {
     }
 
     /**
+     * Speed (Homewind 2.2 `speed=`, 0.1 km/h in [SensorRow.value]): named after the CSC sensor,
+     * else the trainer. The row exists once Homewind reports speed.
+     */
+    fun speed(s: HomewindState): SensorRow {
+        val v = s.speedKmh10 ?: return SensorRow(RowStatus.NOT_CONFIGURED, null, null)
+        val name = sensor(s, SensorType.CSC)?.name ?: if (mirrored(s)) trainerName(s) else null
+        return if (s.speedValid) SensorRow(RowStatus.ACTIVE, name, v) else SensorRow(RowStatus.DISCONNECTED, name, null)
+    }
+
+    /** "32.4" from 324 (0.1 km/h). */
+    fun speedText(kmh10: Int): String = "${kmh10 / 10}.${kmh10 % 10}"
+
+    /**
      * Cadence: CSC sensor, else power meter (once it delivered cadence), else trainer.
      * The row exists while one of these sources exists.
      */

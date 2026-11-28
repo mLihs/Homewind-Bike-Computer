@@ -8,7 +8,7 @@ The apps here bring Homewind to the bike computer: see your wind as data fields 
 
 | Folder | Device | Status |
 | --- | --- | --- |
-| [`karoo3/`](karoo3/) | Hammerhead Karoo 3 (karoo-ext extension) | 1.0.1, Homewind 2.2 state API (2.0/2.1 over WebSocket) |
+| [`karoo3/`](karoo3/) | Hammerhead Karoo 3 (karoo-ext extension) | 1.1.0, Homewind 2.2 state API (2.0/2.1 over WebSocket) |
 
 Planned: Garmin (Connect IQ).
 

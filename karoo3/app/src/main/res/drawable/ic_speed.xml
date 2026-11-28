@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Speed gauge in the style of the Homewind Touch icons (viewport 32), tinted in code. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp" android:height="24dp" android:viewportWidth="32" android:viewportHeight="32">
+    <path android:strokeColor="#FFFFFFFF" android:strokeWidth="3" android:strokeLineCap="round"
+        android:fillColor="#00000000" android:pathData="M5,22 A11,11 0 0,1 27,22" />
+    <path android:strokeColor="#FFFFFFFF" android:strokeWidth="3" android:strokeLineCap="round"
+        android:fillColor="#00000000" android:pathData="M16,22 L21.5,13.5" />
+    <path android:fillColor="#FFFFFFFF" android:pathData="M13,22 a3,3 0 1,0 6,0 a3,3 0 1,0 -6,0" />
+</vector>

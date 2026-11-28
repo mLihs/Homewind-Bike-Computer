@@ -23,6 +23,7 @@ class StateParserTest {
         csc_sensor=-
         power=210,1,1
         cadence=88,1,0
+        speed=324,1
         trainer=4,1
         apps=1
         hr_name=Polar H10, chest
@@ -51,6 +52,21 @@ class StateParserTest {
         assertEquals("Tacx NEO 2T", s.trainer!!.name)
         assertTrue(s.trainerWasReady)
         assertTrue(s.appWasConnected)
+    }
+
+    @Test fun parsesSpeed() {
+        val s = StateParser.parse(full, HomewindState())!!
+        assertEquals(324, s.speedKmh10)
+        assertTrue(s.speedValid)
+        val row = Display.speed(s)
+        assertEquals(RowStatus.ACTIVE, row.status)
+        assertEquals("Tacx NEO 2T", row.name) // no CSC sensor: trainer
+        assertEquals("32.4", Display.speedText(row.value!!))
+        assertEquals("0.5", Display.speedText(5))
+        val invalid = StateParser.parse(full.replace("speed=324,1", "speed=0,0"), HomewindState())!!
+        assertEquals(RowStatus.DISCONNECTED, Display.speed(invalid).status)
+        val old = StateParser.parse(full.replace("speed=324,1\r\n", ""), HomewindState())!!
+        assertEquals(RowStatus.NOT_CONFIGURED, Display.speed(old).status)
     }
 
     @Test fun displayRulesWorkOnPolledState() {

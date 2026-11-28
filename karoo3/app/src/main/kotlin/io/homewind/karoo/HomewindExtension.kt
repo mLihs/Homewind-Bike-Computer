@@ -18,6 +18,7 @@ import io.homewind.karoo.fields.StatusField
 import io.homewind.karoo.fields.cadenceField
 import io.homewind.karoo.fields.hrField
 import io.homewind.karoo.fields.powerField
+import io.homewind.karoo.fields.speedField
 
 /**
  * Homewind for Karoo 3 (Homewind 2.2 state API; 2.0/2.1 over the WebSocket).
@@ -44,6 +45,7 @@ class HomewindExtension : KarooExtension(EXTENSION_ID, BuildConfig.VERSION_NAME)
             hrField(EXTENSION_ID),
             powerField(EXTENSION_ID),
             cadenceField(EXTENSION_ID),
+            speedField(EXTENSION_ID),
             GraphField(EXTENSION_ID, "homewind-graph", GraphRenderer.Style.TWO_COLOR),
             GraphField(EXTENSION_ID, "homewind-graph-zones", GraphRenderer.Style.ZONES),
         )
