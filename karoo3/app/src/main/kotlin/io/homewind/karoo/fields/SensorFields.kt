@@ -68,6 +68,8 @@ internal enum class Kind(val icon: Int, val color: Color, val title: String, val
 /** Rows of the combined field: three fit, a fourth is cut off. Speed has its own field and sits in the wide Apps field. */
 private val COMBINED = listOf(Kind.HR, Kind.POWER, Kind.CADENCE)
 
+private const val ROW_GAP_DP = 6
+
 /** "Homewind sensors": one line per set-up sensor: icon, source name, value in the sensor colour. */
 class SensorsField(extension: String) : HomewindGraphicField(extension, "homewind-sensors") {
     override fun renderKey(state: HomewindRuntime.FieldState): Any =
@@ -81,14 +83,17 @@ class SensorsField(extension: String) : HomewindGraphicField(extension, "homewin
         // Rows as tall as their text, grouped in the middle: no spread-out gaps, no clipped descenders
         // ("rpm"). The value size follows the height per row.
         val heightDp = config.viewSize.second / LocalContext.current.resources.displayMetrics.density
-        val valueSp = minOf(config.textSize, 28, (heightDp / rows.size * 0.62f).toInt()).coerceAtLeast(12)
+        // Height per row after 2 dp padding top and bottom and 6 dp between rows; a text line takes
+        // about 1.25 × its size, so this is the largest value that fits without clipping.
+        val rowDp = (heightDp - 4 - ROW_GAP_DP * (rows.size - 1)) / rows.size
+        val valueSp = minOf(36, (rowDp / 1.25f).toInt()).coerceAtLeast(12)
         Column(
-            modifier = GlanceModifier.fillMaxSize().padding(horizontal = 8.dp),
+            modifier = GlanceModifier.fillMaxSize().padding(horizontal = 8.dp, vertical = 2.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             rows.forEachIndexed { i, (kind, r) ->
                 val active = r.status == RowStatus.ACTIVE
-                if (i > 0) Spacer(GlanceModifier.height(2.dp))
+                if (i > 0) Spacer(GlanceModifier.height(ROW_GAP_DP.dp))
                 Row(modifier = GlanceModifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                     Icon(kind.icon, if (active) kind.color else MUTED)
                     Spacer(GlanceModifier.width(6.dp))
@@ -153,7 +158,9 @@ class AppsField(extension: String) : HomewindGraphicField(extension, "homewind-a
     override fun Content(config: ViewConfig, state: HomewindRuntime.FieldState) {
         val app = Display.appBadge(state.hw)
         val trainer = Display.trainerBadge(state.hw)
-        Card(R.drawable.ic_fan, GREEN, "Apps", modifier = GlanceModifier.clickable(actionStartActivity<QrActivity>())) {
+        // Bottom padding 0: the line box of the 36 sp value already leaves about 8 dp under the digits,
+        // so the visible gap at the bottom matches left and right.
+        Card(R.drawable.ic_fan, GREEN, "Apps", modifier = GlanceModifier.clickable(actionStartActivity<QrActivity>()), bottom = 0.dp) {
             val detail = buildList {
                 state.hw.apps?.let { add(if (it == 1) "1 app" else "$it apps") }
                 state.hw.trainer?.takeIf { it.mirror }?.name?.ifBlank { null }?.let { add(it) }
@@ -169,15 +176,15 @@ class AppsField(extension: String) : HomewindGraphicField(extension, "homewind-a
                     Row(verticalAlignment = Alignment.Bottom) {
                         Text(
                             if (active) Kind.SPEED.valueText(speed.value) else "–",
-                            style = bold(if (active) minOf(config.textSize, 28) else 16, TextAlign.Start)
+                            style = bold(if (active) 36 else 16, TextAlign.Start)
                                 .copy(color = ColorProvider(if (active) Kind.SPEED.color else MUTED)),
                             maxLines = 1,
                         )
                         if (active) Text(
                             " km/h",
-                            style = bold(12, TextAlign.Start).copy(color = ColorProvider(Kind.SPEED.color)),
+                            style = bold(16, TextAlign.Start).copy(color = ColorProvider(Kind.SPEED.color)),
                             maxLines = 1,
-                            modifier = GlanceModifier.padding(bottom = 3.dp),
+                            modifier = GlanceModifier.padding(bottom = 5.dp),
                         )
                     }
                 }

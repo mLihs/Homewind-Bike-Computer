@@ -49,10 +49,11 @@ internal fun Card(
     background: Color = BACKGROUND,
     titleColor: Color = Color.White,
     modifier: GlanceModifier = GlanceModifier,
+    bottom: Dp = 4.dp,
     content: @Composable () -> Unit,
 ) {
     Rounded(background, modifier.fillMaxSize()) {
-        Column(modifier = GlanceModifier.fillMaxSize().padding(horizontal = 8.dp, vertical = 4.dp)) {
+        Column(modifier = GlanceModifier.fillMaxSize().padding(start = 8.dp, end = 8.dp, top = 4.dp, bottom = bottom)) {
             Row(modifier = GlanceModifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Icon(icon, iconColor)
                 Spacer(GlanceModifier.defaultWeight())
