@@ -19,9 +19,9 @@
     <string name="field_graph_zones">Homewind graph · zones</string>
     <string name="field_graph_zones_description">Fan speed in step colours (blue to pink) and heart rate (white) over the last 10 minutes</string>
     <string name="field_apps">Homewind apps</string>
-    <string name="field_apps_description">App and trainer connected to Homewind</string>
+    <string name="field_apps_description">App and trainer connected to Homewind; trainer speed in the wide field</string>
     <string name="field_sensors">Homewind sensors</string>
-    <string name="field_sensors_description">Heart rate, power, cadence and speed through Homewind</string>
+    <string name="field_sensors_description">Heart rate, power and cadence through Homewind</string>
     <string name="field_hr">Homewind sensor · HR</string>
     <string name="field_hr_description">Heart rate sensor through Homewind</string>
     <string name="field_power">Homewind sensor · power</string>

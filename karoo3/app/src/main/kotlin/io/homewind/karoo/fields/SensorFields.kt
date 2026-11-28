@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.glance.GlanceModifier
+import androidx.glance.LocalContext
 import androidx.glance.action.actionStartActivity
 import androidx.glance.action.clickable
 import androidx.glance.layout.Alignment
@@ -62,15 +63,18 @@ internal enum class Kind(val icon: Int, val color: Color, val title: String, val
     }
 }
 
+/** Rows of the combined field: three fit, a fourth is cut off. Speed has its own field and sits in the wide Apps field. */
+private val COMBINED = listOf(Kind.HR, Kind.POWER, Kind.CADENCE)
+
 /** "Homewind sensors": one line per set-up sensor: icon, source name, value in the sensor colour. */
 class SensorsField(extension: String) : HomewindGraphicField(extension, "homewind-sensors") {
     override fun renderKey(state: HomewindRuntime.FieldState): Any =
-        listOf(state.link, state.error, state.hw.sensors == null) + Kind.entries.map { it.row(state.hw) }
+        listOf(state.link, state.error, state.hw.sensors == null) + COMBINED.map { it.row(state.hw) }
 
     @Composable
     override fun Content(config: ViewConfig, state: HomewindRuntime.FieldState) {
         if (state.hw.sensors == null) { Waiting(); return }
-        val rows = Kind.entries.map { it to it.row(state.hw) }.filter { it.second.status != RowStatus.NOT_CONFIGURED }
+        val rows = COMBINED.map { it to it.row(state.hw) }.filter { it.second.status != RowStatus.NOT_CONFIGURED }
         if (rows.isEmpty()) { Message("No sensors"); return }
         Column(modifier = GlanceModifier.fillMaxSize().padding(horizontal = 8.dp, vertical = 2.dp)) {
             rows.forEach { (kind, r) ->
@@ -128,9 +132,12 @@ private fun sensorValue(kind: Kind, r: SensorRow, hw: HomewindState): String = w
 }
 
 /** "Homewind apps": APPS card with the badges APP and Trainer (Touch colours); tap opens the QR code. */
+/** From this width the Apps field counts as wide (full-width cell on the Karoo 3). */
+private const val WIDE_DP = 240
+
 class AppsField(extension: String) : HomewindGraphicField(extension, "homewind-apps") {
     override fun renderKey(state: HomewindRuntime.FieldState): Any =
-        listOf(state.link, state.error, state.hw.apps, state.hw.trainer, Display.appBadge(state.hw), Display.trainerBadge(state.hw))
+        listOf(state.link, state.error, state.hw.apps, state.hw.trainer, Display.appBadge(state.hw), Display.trainerBadge(state.hw), Display.speed(state.hw))
 
     @Composable
     override fun Content(config: ViewConfig, state: HomewindRuntime.FieldState) {
@@ -142,7 +149,21 @@ class AppsField(extension: String) : HomewindGraphicField(extension, "homewind-a
                 state.hw.trainer?.takeIf { it.mirror }?.name?.ifBlank { null }?.let { add(it) }
             }.joinToString(" · ")
             Text(detail, style = small(TextAlign.End), maxLines = 1, modifier = GlanceModifier.fillMaxWidth())
-            Row(modifier = GlanceModifier.fillMaxWidth()) {
+            Row(modifier = GlanceModifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                // Wide field only: trainer speed on the left, next to the badges.
+                val widthDp = config.viewSize.first / LocalContext.current.resources.displayMetrics.density
+                val speed = Display.speed(state.hw)
+                if (widthDp >= WIDE_DP && speed.status != RowStatus.NOT_CONFIGURED) {
+                    val active = speed.status == RowStatus.ACTIVE
+                    Icon(Kind.SPEED.icon, if (active) Kind.SPEED.color else MUTED)
+                    Spacer(GlanceModifier.width(6.dp))
+                    Text(
+                        if (active) "${Kind.SPEED.valueText(speed.value)}${Kind.SPEED.unit}" else "–",
+                        style = bold(if (active) minOf(config.textSize, 24) else 16, TextAlign.Start)
+                            .copy(color = ColorProvider(if (active) Kind.SPEED.color else MUTED)),
+                        maxLines = 1,
+                    )
+                }
                 Spacer(GlanceModifier.defaultWeight())
                 BadgeChip("APP", app)
                 if (trainer != Badge.HIDDEN) {

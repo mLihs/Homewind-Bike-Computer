@@ -2,7 +2,7 @@
 
 Karoo 3 extension for [Homewind](https://homewind.io), the open-source fan controller for indoor cyclists: it turns the Xiaomi fan you already own into a training fan that follows your heart rate or power. The extension shows Homewind's fan state in Karoo data fields and changes fan speed and fan mode from the Karoo, from SRAM AXS bonus buttons or Wireless Blips.
 
-**Status: 1.1.1.** Uses Homewind **2.2**'s state API (`GET /api/v1/state`, no WebSocket slot); works with Homewind 2.0 and 2.1 over the WebSocket.
+**Status: 1.1.2.** Uses Homewind **2.2**'s state API (`GET /api/v1/state`, no WebSocket slot); works with Homewind 2.0 and 2.1 over the WebSocket.
 
 Karoo 3 only. Karoo and Homewind must be in the same Wi-Fi. Install, requirements and FAQ for riders: [main README](../README.md#homewind-for-karoo-3).
 
@@ -40,7 +40,7 @@ Both draw Homewind's HR range (HR min/max, where the fan ramps from minimum to m
 
 | Field | Content |
 | --- | --- |
-| **Homewind apps** | Badges **APP** and **Trainer**, Touch colours: green = connected/ready, orange = was connected, now lost, grey = not yet. The Trainer badge is hidden without a mirrored trainer. **Tap: full-screen QR code** to the Homewind web UI (scan with a phone to change settings), tap again to close |
+| **Homewind apps** | Badges **APP** and **Trainer**; in a full-width cell (from 240 dp) the trainer speed on the left, Touch colours: green = connected/ready, orange = was connected, now lost, grey = not yet. The Trainer badge is hidden without a mirrored trainer. **Tap: full-screen QR code** to the Homewind web UI (scan with a phone to change settings), tap again to close |
 
 **Sensors** (what Homewind relays; value in the sensor colour: HR pink, power violet, cadence blue, speed yellow; grey when disconnected)
 
@@ -49,7 +49,7 @@ Both draw Homewind's HR range (HR min/max, where the fan ramps from minimum to m
 | **Homewind sensors** | One line per set-up sensor: icon, source name, value |
 | **Homewind sensor · HR / power / cadence / speed** | One sensor as a card |
 
-Speed is the trainer's speed (km/h, one decimal) and needs Homewind 2.2 (`speed=` in `/api/v1/state`) and a mirrored trainer. Otherwise the speed card shows *Homewind 2.2* or *No trainer* and the Sensors field leaves the row out. Power source: power meter while it delivers, otherwise the trainer. Cadence source: cadence sensor, else power meter (once it sent cadence), else trainer (Touch concept rules).
+Speed is the trainer's speed (km/h, one decimal) and needs Homewind 2.2 (`speed=` in `/api/v1/state`) and a mirrored trainer. Otherwise the speed card shows *Homewind 2.2* or *No trainer*. Speed is not in the Sensors field (three rows fit, a fourth is cut off); it has its own card and sits in the wide Apps field. Power source: power meter while it delivers, otherwise the trainer. Cadence source: cadence sensor, else power meter (once it sent cadence), else trainer (Touch concept rules).
 
 Field texts when there is no data: *Set up* (no address), *Wi-Fi off* (Karoo Wi-Fi off), *Offline* (no answer), *Busy* (Homewind answers 503: update or maintenance), *Web UI full* (two browsers already connected, see "Limits"). Below it the observed error in plain text (0.4.1, see `docs/HOMEWIND_DISCOVERY.md`):
 
