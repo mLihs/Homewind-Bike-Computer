@@ -9,6 +9,7 @@ import androidx.glance.LocalContext
 import androidx.glance.action.actionStartActivity
 import androidx.glance.action.clickable
 import androidx.glance.layout.Alignment
+import androidx.glance.layout.Box
 import androidx.glance.layout.Column
 import androidx.glance.layout.Row
 import androidx.glance.layout.Spacer
@@ -79,24 +80,31 @@ class SensorsField(extension: String) : HomewindGraphicField(extension, "homewin
         if (state.hw.sensors == null) { Waiting(); return }
         val rows = COMBINED.map { it to it.row(state.hw) }.filter { it.second.status != RowStatus.NOT_CONFIGURED }
         if (rows.isEmpty()) { Message("No sensors"); return }
-        // Each row gets exactly a third of the height (no gaps, no padding), so nothing reaches past
-        // the field. The value is sized so its text line (about 1.3 × the size, incl. font padding)
-        // fits the row; on the Karoo 3 that is about the size of 1.1.6, which looked right.
+        // Value size as in 1.1.7 (its text line fits a third of the height). Rows are then made
+        // shorter than that line: the value sits in a box aligned to the bottom, so only the empty
+        // font padding above the digits is cut off. That halves the visible gap between the rows;
+        // the three rows stay together in the middle of the field.
         val heightDp = config.viewSize.second / LocalContext.current.resources.displayMetrics.density
         val valueSp = minOf(40, (heightDp / rows.size / 1.3f).toInt()).coerceAtLeast(12)
-        Column(modifier = GlanceModifier.fillMaxSize().padding(horizontal = 8.dp)) {
+        val rowDp = valueSp * 1.0f
+        Column(
+            modifier = GlanceModifier.fillMaxSize().padding(horizontal = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
             rows.forEach { (kind, r) ->
                 val active = r.status == RowStatus.ACTIVE
-                Row(modifier = GlanceModifier.fillMaxWidth().defaultWeight(), verticalAlignment = Alignment.CenterVertically) {
+                Row(modifier = GlanceModifier.fillMaxWidth().height(rowDp.dp), verticalAlignment = Alignment.CenterVertically) {
                     Icon(kind.icon, if (active) kind.color else MUTED)
                     Spacer(GlanceModifier.width(6.dp))
                     Text(r.name ?: "", style = small(TextAlign.Start).copy(fontSize = 10.sp), maxLines = 1, modifier = GlanceModifier.defaultWeight())
-                    Text(
-                        sensorValue(kind, r, state.hw),
-                        style = bold(if (active) valueSp else minOf(valueSp, 14), TextAlign.End)
-                            .copy(color = ColorProvider(if (active) kind.color else MUTED)),
-                        maxLines = 1,
-                    )
+                    Box(modifier = GlanceModifier.height(rowDp.dp), contentAlignment = if (active) Alignment.BottomEnd else Alignment.CenterEnd) {
+                        Text(
+                            sensorValue(kind, r, state.hw),
+                            style = bold(if (active) valueSp else minOf(valueSp, 14), TextAlign.End)
+                                .copy(color = ColorProvider(if (active) kind.color else MUTED)),
+                            maxLines = 1,
+                        )
+                    }
                 }
             }
         }

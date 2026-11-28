@@ -2,7 +2,7 @@
 
 Karoo 3 extension for [Homewind](https://homewind.io), the open-source fan controller for indoor cyclists: it turns the Xiaomi fan you already own into a training fan that follows your heart rate or power. The extension shows Homewind's fan state in Karoo data fields and changes fan speed and fan mode from the Karoo, from SRAM AXS bonus buttons or Wireless Blips.
 
-**Status: 1.1.7.** Uses Homewind **2.2**'s state API (`GET /api/v1/state`, no WebSocket slot); works with Homewind 2.0 and 2.1 over the WebSocket.
+**Status: 1.1.8.** Uses Homewind **2.2**'s state API (`GET /api/v1/state`, no WebSocket slot); works with Homewind 2.0 and 2.1 over the WebSocket.
 
 Karoo 3 only. Karoo and Homewind must be in the same Wi-Fi. Install, requirements and FAQ for riders: [main README](../README.md#homewind-for-karoo-3).
 
